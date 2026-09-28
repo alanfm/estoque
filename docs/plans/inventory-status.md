@@ -59,3 +59,14 @@ P02 aceita pelo usuário em 28/09/2026, com as limitações de verificação exp
 P03 aceita pelo usuário em 28/09/2026. Implementação e verificações locais concluídas; ainda não houve E2E, medição de desempenho ou teste dedicado do bloqueio de unidade/categoria após lançamento no ledger.
 
 Sem dados operacionais importados. A implantação das migrations foi apenas no banco de desenvolvimento local; não executada em homologação/produção.
+
+## P04 — Livro, concorrência e idempotência
+
+| Item | Estado | Evidência / próxima ação |
+|---|---|---|
+| P04.1–P04.4 Ledger de confirmação e idempotência | aceito | `PostMovementAction` confirma ENTRY/ISSUE em transação, bloqueia itens/saldos em ordem determinística, grava ledger e projeção, e valida saldo disponível. `ExecuteIdempotentOperation` persiste hash/resposta no mesmo commit e recupera repetição/confere conflito. |
+| P04.5–P04.7 Histórico, consulta e auditoria | aceito com limitações registradas | `BalanceQuery`, `ItemLedgerQuery` e auditoria de confirmação adicionados. Validação completa de backdating por sequência, eventos pós-commit e garantias concorrentes com duas conexões permanecem pendentes antes de ampliar/usar a confirmação operacional. |
+| P04.8 Reconciliação | implementado localmente | `inventory:reconcile [--json]` compara projeção e soma do ledger por variante/local; somente leitura. |
+| Verificações focais | aprovadas | `InventoryLedgerTest`: 1 teste/7 assertions (idempotência, divergência de payload, insuficiência sem commit e reconciliação); `composer analyse`, `composer format:check` aprovados. |
+
+P04 aceita pelo usuário em 28/09/2026, com as limitações acima explícitas. Antes de expor confirmação operacional ou avançar para P05, concluir cobertura de concorrência real/locks e retroatividade; não foram carregados dados reais.

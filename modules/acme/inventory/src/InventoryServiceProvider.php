@@ -29,7 +29,7 @@ final class InventoryServiceProvider extends ModuleServiceProvider
     protected function bootModule(ModuleDescriptor $module): void
     {
         if ($this->app->runningInConsole()) {
-            $this->commands([Console\InstallInventoryCommand::class]);
+            $this->commands([Console\InstallInventoryCommand::class, Console\ReconcileInventoryCommand::class]);
         }
     }
 }
