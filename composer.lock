@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ffc8e17db07447172daf90e629d09587",
+    "content-hash": "1d0f86b24c3e928c8572b5e7120398e0",
     "packages": [
         {
             "name": "acme/customers",
@@ -37,6 +37,42 @@
                 }
             },
             "description": "Módulo de referência de clientes para Starter Kit",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
+            "name": "acme/inventory",
+            "version": "1.0.0",
+            "dist": {
+                "type": "path",
+                "url": "modules/acme/inventory",
+                "reference": "c2b6304b0441807bd44ae3f2cbda141d2a266142"
+            },
+            "require": {
+                "laravel/framework": "^13.0",
+                "php": "~8.5.0"
+            },
+            "type": "starterkit-module",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Acme\\Inventory\\InventoryServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Acme\\Inventory\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Acme\\Inventory\\Tests\\": "tests/"
+                }
+            },
+            "description": "Módulo de almoxarifado de TI do Starterkit",
             "transport-options": {
                 "symlink": true,
                 "relative": true

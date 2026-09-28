@@ -4,6 +4,8 @@
 **Referência técnica:** `alanfm/starterkit`, revisão consultada `ff1812f0dbfd95e84243d738768262ca0d36e1af`; o checkout em `~/Projects/starterkit` não é destino de alterações.
 **Estado:** P00 permanece bloqueada pela falha Act registrada; P01 iniciada por orientação do usuário, com implementação e verificações locais concluídas.
 
+P02 foi iniciada explicitamente pelo usuário antes da resolução do gate P00/P01. Essa decisão não equivale ao aceite do gate anterior; a falha Act segue pendente.
+
 ## P00 — Preparação e baseline
 
 | Item | Estado | Evidência / próxima ação |
@@ -32,3 +34,17 @@ Nenhum código funcional do estoque foi implementado e nenhum dado operacional f
 | Verificação integrada | pendente | Sail: PHP 47 testes/346 assertions e Vitest 58 testes passam; Pint, PHPStan, lint, typecheck, Prettier, build e diagnóstico modular passam. Reexecutar Act após resolver o bloqueio P00 para evidência limpa. |
 
 P01 foi avançada antes do aceite formal de P00 a pedido do usuário. A falha Act permanece classificada como bloqueio de baseline; não houve release/tag nem importação de dados reais.
+
+## P02 — Pacote modular, schema e autorização
+
+| Item | Estado | Evidência / próxima ação |
+|---|---|---|
+| P02.1–P02.5 Pacote, manifesto, provider, rota e página inicial | aceito | Pacote Composer descoberto pelo loader; diagnose sem issues. Manifesto declara permissões individuais e entrada frontend protegida. |
+| P02.6 Schema | aceito | Três migrations criam as 12 tabelas, índices, constraints e FKs para usuários do host. `artisan migrate --force` aplicado com sucesso ao banco local após corrigir nome longo de índice. |
+| P02.7 Instalação e fábrica | aceito | `inventory:install` executado duas vezes; local TI permanece idempotente. Factory/model de categoria mínimo. |
+| P02.8–P02.9 Navegação/permissões/ciclo de habilitação | aceito pela aprovação do usuário | Página inicial lazy; endpoint inicial protegido por sessão/permissão; manifesto sincronizado (22 criadas, 16 atualizadas). O ciclo disable/enable sem perda não foi exercitado. |
+| Verificações | aceito pela aprovação do usuário | Diagnose sem issues; `ContractDiscoveryTest` passa; migrações aplicadas em MariaDB local; Pint, PHPStan, ESLint, TypeScript e build passam. Build mantém aviso de chunk >500 kB. Não foi executado teste em banco limpo nem ciclo modular completo. |
+
+P02 aceita pelo usuário em 28/09/2026, com as limitações de verificação explicitadas acima.
+
+Sem dados operacionais importados. A implantação das migrations foi apenas no banco de desenvolvimento local; não executada em homologação/produção.

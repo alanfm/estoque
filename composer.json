@@ -5,6 +5,7 @@
     "require": {
         "php": "~8.5.0",
         "acme/customers": "^1.0",
+        "acme/inventory": "^1.0",
         "laravel/framework": "^13.17",
         "laravel/sanctum": "^4.0"
     },
