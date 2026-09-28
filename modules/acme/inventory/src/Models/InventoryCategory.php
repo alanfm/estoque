@@ -6,6 +6,13 @@ use Acme\Inventory\Database\Factories\InventoryCategoryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $normalized_name
+ * @property bool $active
+ * @property int $version
+ */
 final class InventoryCategory extends Model
 {
     /** @use HasFactory<InventoryCategoryFactory> */

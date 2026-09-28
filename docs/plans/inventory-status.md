@@ -47,4 +47,15 @@ P01 foi avançada antes do aceite formal de P00 a pedido do usuário. A falha Ac
 
 P02 aceita pelo usuário em 28/09/2026, com as limitações de verificação explicitadas acima.
 
+## P03 — Categorias, códigos e variantes
+
+| Item | Estado | Evidência / próxima ação |
+|---|---|---|
+| P03.1–P03.4 API, regras e concorrência otimista | concluído localmente | CRUD de categorias/itens/variantes, normalização, autorização por operação, identidade normalizada, saldos iniciais zero e controle de versão. Item impede alterar categoria/unidade após lançamento no ledger. |
+| P03.5–P03.6 UI e listagem/detalhe | concluído localmente | Páginas lazy de categorias, itens, cadastro e detalhe; busca, filtro por categoria, paginação com estado na URL, variantes/saldos e ações condicionadas à permissão. |
+| Testes | concluído localmente | InventoryCatalogTest cobre autorização, categoria/código normalizados, marcas diferentes, variante duplicada normalizada, saldos iniciais zero, versão obsoleta, categoria inativa e filtros. |
+| Checks | concluído localmente | InventoryCatalogTest: 3 testes/28 assertions; Pint, PHPStan, ESLint, TypeScript, Vitest sentinel e build aprovados. Build mantém aviso de chunk >500 kB. |
+
+P03 aceita pelo usuário em 28/09/2026. Implementação e verificações locais concluídas; ainda não houve E2E, medição de desempenho ou teste dedicado do bloqueio de unidade/categoria após lançamento no ledger.
+
 Sem dados operacionais importados. A implantação das migrations foi apenas no banco de desenvolvimento local; não executada em homologação/produção.
