@@ -2,7 +2,7 @@
 
 **Raiz obrigatória do projeto:** `~/Projects/estoque`.
 **Referência técnica:** `alanfm/starterkit`, revisão consultada `ff1812f0dbfd95e84243d738768262ca0d36e1af`; o checkout em `~/Projects/starterkit` não é destino de alterações.
-**Estado:** P00 permanece bloqueada pela falha Act registrada; P01 iniciada por orientação do usuário, com implementação e verificações locais concluídas.
+**Estado:** P00 permanece bloqueada pela falha Act registrada; P01 concluída localmente; P02, P03, P04 e P05 aceitas pelo usuário. A falha Act e as limitações de concorrência/retroatividade permanecem explícitas.
 
 P02 foi iniciada explicitamente pelo usuário antes da resolução do gate P00/P01. Essa decisão não equivale ao aceite do gate anterior; a falha Act segue pendente.
 
@@ -69,4 +69,15 @@ Sem dados operacionais importados. A implantação das migrations foi apenas no 
 | P04.8 Reconciliação | implementado localmente | `inventory:reconcile [--json]` compara projeção e soma do ledger por variante/local; somente leitura. |
 | Verificações focais | aprovadas | `InventoryLedgerTest`: 1 teste/7 assertions (idempotência, divergência de payload, insuficiência sem commit e reconciliação); `composer analyse`, `composer format:check` aprovados. |
 
-P04 aceita pelo usuário em 28/09/2026, com as limitações acima explícitas. Antes de expor confirmação operacional ou avançar para P05, concluir cobertura de concorrência real/locks e retroatividade; não foram carregados dados reais.
+P04 aceita pelo usuário em 28/09/2026, com as limitações acima explícitas. P05 pode desenvolver rascunhos e interface, mas confirmação operacional permanece bloqueada até concluir cobertura de concorrência real/locks e retroatividade; não foram carregados dados reais.
+
+## P05 — Rascunhos, entradas e saídas
+
+| Item | Estado | Evidência / próxima ação |
+|---|---|---|
+| P05.1 Rascunhos | implementado parcialmente | API de criação idempotente, atualização com versão otimista, listagem/detalhe e descarte lógico; propriedade do criador ou permissão `manageDrafts`; eventos de auditoria. Linhas guardam snapshot; rascunhos não alteram saldos. |
+| P05.2–P05.3 Dados operacionais | parcial | DTO HTTP valida linhas e campos de entrada/saída, custo decimal permanece texto no cliente/decimal no banco; regras incompletas são revalidadas na futura confirmação. Confirmar ainda não está exposto, respeitando o gate de segurança P04. |
+| P05.5 UI | implementado parcialmente | Lista/detalhe e formulários de rascunho de entrada/saída com seletor de variantes, estados de carregamento/erro e descarte. Edição visual do rascunho ainda pendente. |
+| Testes e checks focais | aprovados localmente | `InventoryMovementDraftTest`: 1 teste/15 assertions, incluindo rascunho incompleto, repetição da Idempotency-Key, propriedade, descarte e ausência de efeito no ledger. Pint, PHPStan, lint, typecheck, Vitest sentinela e build passaram. Build mantém alerta de chunk >500 kB. |
+
+P05 aceita pelo usuário em 28/09/2026, com as limitações registradas acima. Permanecem pendentes os testes P04 de concorrência real e retroatividade, validação completa na confirmação (origem/documento/OS/custo/data/saldo), endpoints/UI de confirmação e edição visual, além de testes adicionais para conflitos de versão, permissões e regras de negócio. A confirmação operacional continua bloqueada até resolver as limitações de integridade. Nenhum saldo operacional foi alterado.

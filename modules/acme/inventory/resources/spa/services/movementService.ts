@@ -1,0 +1,75 @@
+import {
+  apiRequest,
+  type ApiResource,
+  type Paginated,
+} from "@starterkit/module-kit";
+
+export interface MovementLine {
+  variantId: string;
+  quantity: number;
+  unitCost?: string | null;
+}
+export interface MovementDraft {
+  id: number;
+  type: "ENTRY" | "ISSUE";
+  status: string;
+  location_id: number;
+  version: number;
+  occurred_on: string | null;
+  description: string | null;
+  observations: string | null;
+  service_order_number: string | null;
+  document_number: string | null;
+  lines: Array<{
+    id: number;
+    variant_id: number;
+    quantity: number;
+    snapshot: Record<string, string>;
+  }>;
+}
+export interface DraftInput {
+  type: "ENTRY" | "ISSUE";
+  locationId: string;
+  occurredOn?: string | null;
+  origin?: string;
+  serviceOrderNumber?: string | null;
+  documentNumber?: string | null;
+  description?: string | null;
+  observations?: string | null;
+  lines: MovementLine[];
+}
+
+export const movementService = {
+  list(signal?: AbortSignal) {
+    return apiRequest<Paginated<MovementDraft>>("/inventory/movements", {
+      query: { perPage: "50" },
+      signal,
+    });
+  },
+  async get(id: string, signal?: AbortSignal) {
+    return (
+      await apiRequest<ApiResource<MovementDraft>>(
+        `/inventory/movements/${id}`,
+        { signal },
+      )
+    ).data;
+  },
+  async createDraft(input: DraftInput) {
+    const key = crypto.randomUUID();
+    return (
+      await apiRequest<ApiResource<MovementDraft>>("/inventory/movements", {
+        method: "POST",
+        headers: { "Idempotency-Key": key },
+        body: input,
+      })
+    ).data;
+  },
+  async cancel(id: number) {
+    return (
+      await apiRequest<ApiResource<MovementDraft>>(
+        `/inventory/movements/${id}/cancel`,
+        { method: "POST", body: {} },
+      )
+    ).data;
+  },
+};
