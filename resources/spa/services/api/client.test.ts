@@ -116,9 +116,143 @@ describe("apiRequest", () => {
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("/api/v1/auth/login");
     expect(init.credentials).toBe("same-origin");
-    expect((init.headers as Record<string, string>)["X-XSRF-TOKEN"]).toBe(
-      "token-value",
+    expect(new Headers(init.headers).get("X-XSRF-TOKEN")).toBe("token-value");
+  });
+
+  test("preserva headers customizados sem permitir substituir headers protegidos", async () => {
+    document.cookie = "XSRF-TOKEN=token-value";
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(() => Promise.resolve(jsonResponse({ data: {} })));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await apiRequest("/items", {
+      method: "POST",
+      headers: { "Idempotency-Key": "op-123", "X-Trace-Id": "trace-1" },
+      body: { name: "SSD" },
+    });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = new Headers(init.headers);
+    expect(headers.get("Idempotency-Key")).toBe("op-123");
+    expect(headers.get("X-Trace-Id")).toBe("trace-1");
+    expect(headers.get("X-XSRF-TOKEN")).toBe("token-value");
+
+    await expect(
+      apiRequest("/items", {
+        method: "POST",
+        headers: { "x-xsrf-token": "forged" },
+      }),
+    ).rejects.toThrow(/controlado pelo cliente da API/);
+  });
+
+  test("envia FormData sem definir Content-Type manualmente", async () => {
+    document.cookie = "XSRF-TOKEN=token-value";
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(() => Promise.resolve(jsonResponse({ data: {} })));
+    vi.stubGlobal("fetch", fetchMock);
+    const form = new FormData();
+    form.append("file", "workbook");
+
+    await apiRequest("/imports/analyze", { method: "POST", body: form });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(init.body).toBe(form);
+    expect(new Headers(init.headers).has("Content-Type")).toBe(false);
+  });
+
+  test("renova CSRF e repete escrita idempotente preservando chave e corpo", async () => {
+    document.cookie = "XSRF-TOKEN=old-token";
+    let writes = 0;
+    const fetchMock = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      if (String(input) === "/sanctum/csrf-cookie") {
+        document.cookie = "XSRF-TOKEN=new-token";
+        return Promise.resolve(new Response(null, { status: 204 }));
+      }
+
+      writes += 1;
+      return Promise.resolve(
+        writes === 1
+          ? jsonResponse({ error: { code: "SESSION_EXPIRED" } }, 419)
+          : jsonResponse({ data: { id: "1" } }),
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      apiRequest("/movements", {
+        method: "POST",
+        headers: { "Idempotency-Key": "movement-1" },
+        body: { occurredOn: "2026-09-28", quantity: 2 },
+      }),
+    ).resolves.toEqual({ data: { id: "1" } });
+
+    const mutationCalls = fetchMock.mock.calls.filter(
+      ([url]) => String(url) === "/api/v1/movements",
     );
+    expect(mutationCalls).toHaveLength(2);
+    const [, first] = mutationCalls[0] as [string, RequestInit];
+    const [, retry] = mutationCalls[1] as [string, RequestInit];
+    expect(first.body).toBe(retry.body);
+    expect(new Headers(first.headers).get("Idempotency-Key")).toBe(
+      "movement-1",
+    );
+    expect(new Headers(retry.headers).get("Idempotency-Key")).toBe(
+      "movement-1",
+    );
+    expect(new Headers(retry.headers).get("X-XSRF-TOKEN")).toBe("new-token");
+  });
+
+  test("não repete escrita sem Idempotency-Key após 419", async () => {
+    document.cookie = "XSRF-TOKEN=token-value";
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(() =>
+        Promise.resolve(
+          jsonResponse({ error: { code: "SESSION_EXPIRED" } }, 419),
+        ),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      apiRequest("/movements", { method: "POST", body: { quantity: 1 } }),
+    ).rejects.toMatchObject({ status: 419 });
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  test("apiDownload retorna Blob e normaliza envelope de erro", async () => {
+    const { apiDownload } = await import("./client");
+    const file = new Blob(["inventory report"], { type: "text/csv" });
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockImplementationOnce(() => Promise.resolve(new Response(file)))
+        .mockImplementationOnce(() =>
+          Promise.resolve(
+            jsonResponse(
+              {
+                error: {
+                  code: "FORBIDDEN",
+                  message: "Acesso negado.",
+                  details: null,
+                  requestId: "01K",
+                },
+              },
+              403,
+            ),
+          ),
+        ),
+    );
+
+    await expect(apiDownload("/reports/stock.csv")).resolves.toBeInstanceOf(
+      Blob,
+    );
+    await expect(apiDownload("/reports/stock.csv")).rejects.toMatchObject({
+      kind: "forbidden",
+      requestId: "01K",
+    });
   });
 
   test("emite evento em 401", async () => {

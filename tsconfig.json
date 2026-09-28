@@ -17,6 +17,7 @@
   },
   "include": [
     "resources/spa",
+    "modules/acme/inventory/resources/spa",
     "tests/e2e",
     "build",
     "vite.config.ts",

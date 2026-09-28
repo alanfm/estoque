@@ -10,7 +10,23 @@ export type {
   ModuleNavigationItem,
   ModuleRoute,
 } from "../modules/types";
+export type {
+  ApiErrorBody,
+  ApiResource,
+  ListQuery,
+  Paginated,
+  PaginationLinks,
+  PaginationMeta,
+  ValidationErrorDetails,
+} from "../types/api";
+export type {
+  QueryValue,
+  RequestOptions as ApiRequestOptions,
+} from "../services/api/client";
 
+export { apiDownload, apiRequest } from "../services/api/client";
+export { ApiError } from "../services/api/errors";
+export type { ApiErrorKind } from "../services/api/errors";
 export { Button } from "../components/actions/Button";
 export { Card } from "../components/data-display/Card";
 export { Alert } from "../components/feedback/Alert";

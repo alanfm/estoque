@@ -33,7 +33,7 @@ services:
       MAIL_SCHEME: ${MAIL_SCHEME:-smtp}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:?Set MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Starter Kit}
-      STARTERKIT_VERSION: ${STARTERKIT_VERSION:-1.0.0}
+      STARTERKIT_VERSION: ${STARTERKIT_VERSION:-1.1.0}
     volumes:
       - module-state:/var/lib/starterkit
     command: ["php-fpm", "-F"]

@@ -8,3 +8,4 @@ parameters:
         - routes
         - database/migrations
         - tests
+        - modules/acme/inventory

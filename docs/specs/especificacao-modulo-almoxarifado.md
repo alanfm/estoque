@@ -226,7 +226,7 @@ Valor total da linha = quantity × unit_cost; NULL se custo desconhecido. Não c
 
 Plataforma declarada pelo starterkit: PHP ~8.5.0, Laravel ^13.0, MariaDB, SPA React/TypeScript, design system público, React Hook Form e Docker/Sail.
 
-Identidade técnica adotada para preparar o plano: inventory; pacote local acme/inventory; namespace Acme\\Inventory; versão de lançamento 1.0.0; core ^1.0.0 sujeito aos testes de compatibilidade. Vendor é substituível antes da primeira publicação.
+Identidade técnica adotada para preparar o plano: inventory; pacote local acme/inventory; namespace Acme\\Inventory; versão de lançamento 1.0.0; core ^1.1.0, pois o módulo consome o contrato público de API adicionado no marco 1.1.0. Vendor é substituível antes da primeira publicação.
 
 Provider estende App\\Core\\Modules\\ModuleServiceProvider e retorna inventory em moduleName(). Manifesto schemaVersion 1, apiPrefix inventory, frontendEntry resources/spa/module.ts, dependencies vazio, catálogo completo da seção 10.
 

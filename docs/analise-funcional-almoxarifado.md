@@ -302,7 +302,7 @@ Não se recomenda importar apenas o saldo inicial, pois isso descartaria o hist�
 
 ### B — Fundação
 
-- Criar Composer package e module.json para core ^1.0.0.
+- Criar Composer package e module.json para core ^1.1.0, compatível com o cliente HTTP público adotado pelo módulo.
 - Provider, migrations, frontend entry, navegação e permissões.
 - Factories, policies e infraestrutura de testes.
 

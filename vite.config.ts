@@ -35,7 +35,10 @@ export default defineConfig(({ mode }) => {
       environment: "jsdom",
       globals: true,
       setupFiles: ["resources/spa/test/setup.ts"],
-      include: ["resources/spa/**/*.test.{ts,tsx}"],
+      include: [
+        "resources/spa/**/*.test.{ts,tsx}",
+        "modules/acme/inventory/resources/spa/**/*.test.{ts,tsx}",
+      ],
       restoreMocks: true,
     },
   };

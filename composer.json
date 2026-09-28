@@ -18,7 +18,7 @@
         "phpunit/phpunit": "^12.5"
     },
     "autoload": {"psr-4": {"App\\": "app/", "Database\\Factories\\": "database/factories/", "Database\\Seeders\\": "database/seeders/"}},
-    "autoload-dev": {"psr-4": {"Tests\\": "tests/", "Starterkit\\ContractSample\\": "tests/Fixtures/Modules/Starterkit/ContractSample/src/"}},
+    "autoload-dev": {"psr-4": {"Tests\\": "tests/", "Starterkit\\ContractSample\\": "tests/Fixtures/Modules/Starterkit/ContractSample/src/", "Acme\\Inventory\\Tests\\": "modules/acme/inventory/tests/"}},
     "repositories": [
         {"type": "path", "url": "modules/*/*", "options": {"symlink": true}}
     ],

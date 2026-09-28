@@ -7,7 +7,7 @@
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "format:check": "prettier --check resources/spa build tests/Fixtures/Modules",
+    "format:check": "prettier --check resources/spa modules/acme/customers/resources/spa modules/acme/inventory/resources/spa build tests/Fixtures/Modules",
     "test": "vitest run",
     "test:e2e": "playwright test"
   },

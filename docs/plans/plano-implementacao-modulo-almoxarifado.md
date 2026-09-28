@@ -75,7 +75,7 @@ Cada etapa termina com evidências salvas em docs/plans/inventory-status.md e ma
 
 1. Rascunhos não reservam saldo; confirmação revalida disponibilidade.
 2. Lançamentos assinados são fonte auditável; projeção de saldo é atualizada na mesma transação.
-3. Core frontend recebe extensão compatível de API pública: propor versão 1.1.0. Módulo exige ^1.1.0 se consumir contratos publicados nessa versão. Atualizar a faixa proposta ^1.0.0 na especificação durante P01/P02, com registro explícito da dependência.
+3. Core frontend recebe extensão compatível de API pública na versão 1.1.0. Módulos que consumirem os novos contratos exigem `^1.1.0`; a especificação do Inventory e o módulo Customers de referência declaram essa dependência.
 4. A publicação do core 1.1.0 depende dos testes e de seu versionamento oficial; este plano não cria release ou tag.
 5. Idempotência cobre criação de rascunho, confirmação, ajuste, estorno e commit de importação. Acrescentar criação de rascunho ao contrato funcional durante P04, para impedir duplicação após falha de rede.
 6. Client mantém CSRF, eventos de sessão e envelope do host; retries preservam a chave. Escritas sem proteção não são reenviadas automaticamente.

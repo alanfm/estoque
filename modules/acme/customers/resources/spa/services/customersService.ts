@@ -1,8 +1,8 @@
-import type {
-  ApiResource,
-  Paginated,
-} from "../../../../../../resources/spa/types/api";
-import { apiRequest } from "../../../../../../resources/spa/services/api/client";
+import {
+  apiRequest,
+  type ApiResource,
+  type Paginated,
+} from "@starterkit/module-kit";
 
 export interface Customer {
   id: number;

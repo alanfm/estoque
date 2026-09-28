@@ -12,7 +12,7 @@ return [
     | estável é publicada após a validação dos contratos na F7.
     |
     */
-    'core_version' => (string) env('STARTERKIT_VERSION', '1.0.0'),
+    'core_version' => (string) env('STARTERKIT_VERSION', '1.1.0'),
 
     /*
     |--------------------------------------------------------------------------
