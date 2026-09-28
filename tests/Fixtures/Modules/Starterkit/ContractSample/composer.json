@@ -1,0 +1,21 @@
+{
+  "name": "starterkit/contract-sample",
+  "type": "starterkit-module",
+  "description": "Módulo de amostra usado pela suíte de contrato do núcleo.",
+  "require": {
+    "php": "~8.5.0",
+    "laravel/framework": "^13.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Starterkit\\ContractSample\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Starterkit\\ContractSample\\ContractSampleServiceProvider"
+      ]
+    }
+  }
+}

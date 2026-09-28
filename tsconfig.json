@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "types": ["vite/client", "vitest/globals", "node"],
+    "baseUrl": ".",
+    "paths": {
+      "@starterkit/module-kit": ["./resources/spa/module-kit/index.ts"]
+    }
+  },
+  "include": [
+    "resources/spa",
+    "tests/e2e",
+    "build",
+    "vite.config.ts",
+    "playwright.config.ts"
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://starterkit.local/modules/module.schema.json",
+  "title": "Starter Kit module manifest",
+  "description": "Contrato versionado do manifesto module.json. A versão vigente é declarada em schemaVersion.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "name",
+    "displayName",
+    "version",
+    "core",
+    "apiPrefix",
+    "frontendEntry",
+    "dependencies",
+    "permissions"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1,
+      "description": "Versão do schema do manifesto suportada pelo núcleo."
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "Identificador técnico único em kebab-case."
+    },
+    "displayName": { "type": "string", "minLength": 1 },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Versão semântica do módulo."
+    },
+    "core": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Faixa semântica de versões compatíveis do núcleo."
+    },
+    "apiPrefix": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "Prefixo das rotas HTTP sob /api/v1."
+    },
+    "frontendEntry": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Caminho relativo da entrada React/TypeScript compilada pelo host."
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "version"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "version": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "permissions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Permissões fornecidas pelo módulo, prefixadas pelo identificador."
+    }
+  }
+}

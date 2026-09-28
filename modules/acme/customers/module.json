@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "name": "customers",
+  "displayName": "Clientes",
+  "version": "1.0.0",
+  "core": "^1.0.0",
+  "apiPrefix": "customers",
+  "frontendEntry": "resources/spa/module.ts",
+  "dependencies": [],
+  "permissions": [
+    "customers.viewAny",
+    "customers.view",
+    "customers.create",
+    "customers.update",
+    "customers.delete"
+  ]
+}

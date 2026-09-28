@@ -1,0 +1,91 @@
+/*
+ * Tokens do sistema de design.
+ * Nomes seguem design.md na forma kebab-case com prefixo `--color-`.
+ * O atributo `data-theme` representa sempre o tema resolvido.
+ */
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --color-background-canvas: #f8fcf9;
+  --color-background-surface: #ffffff;
+  --color-background-subtle: #edf7f0;
+  --color-background-inverse: #1e482b;
+
+  --color-text-primary: #0b1b09;
+  --color-text-secondary: #4d4d4d;
+  --color-text-muted: #666666;
+  --color-text-inverse: #ffffff;
+
+  --color-border-default: #d9d9d9;
+  --color-border-strong: #8c8c8c;
+
+  --color-action-primary: #357e4b;
+  --color-action-primary-hover: #1e482b;
+  --color-action-primary-foreground: #ffffff;
+  --color-action-primary-subtle: #dbf0e1;
+  --color-action-danger: #b20701;
+  --color-action-danger-hover: #7f0501;
+  --color-action-danger-foreground: #ffffff;
+  --color-action-disabled-background: #e6e6e6;
+  --color-action-disabled-foreground: #666666;
+  --color-action-disabled-border: #8c8c8c;
+
+  --color-focus-ring: #0764a1;
+
+  --color-status-success: #356204;
+  --color-status-success-surface: #f3fee7;
+  --color-status-warning: #806000;
+  --color-status-warning-surface: #fff9e5;
+  --color-status-danger: #b20701;
+  --color-status-danger-surface: #fff5f5;
+  --color-status-info: #0764a1;
+  --color-status-info-surface: #f6fafd;
+  --color-status-neutral: #404040;
+  --color-status-neutral-surface: #f1f3f1;
+
+  --color-overlay-scrim: rgba(11, 27, 9, 0.64);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-background-canvas: #0b1b09;
+  --color-background-surface: #122315;
+  --color-background-subtle: #1e482b;
+  --color-background-inverse: #f8fcf9;
+
+  --color-text-primary: #f8fcf9;
+  --color-text-secondary: #c9e8d3;
+  --color-text-muted: #a5d9b5;
+  --color-text-inverse: #0b1b09;
+
+  --color-border-default: #357e4b;
+  --color-border-strong: #6fc388;
+
+  --color-action-primary: #6fc388;
+  --color-action-primary-hover: #93d2a6;
+  --color-action-primary-foreground: #0b1b09;
+  --color-action-primary-subtle: #1e482b;
+  --color-action-danger: #fe8480;
+  --color-action-danger-hover: #ff9d99;
+  --color-action-danger-foreground: #0b1b09;
+  --color-action-disabled-background: #28362b;
+  --color-action-disabled-foreground: #bacfbe;
+  --color-action-disabled-border: #8ca995;
+
+  --color-focus-ring: #93c6ec;
+
+  --color-status-success: #b5f86d;
+  --color-status-success-surface: #213414;
+  --color-status-warning: #ffd966;
+  --color-status-warning-surface: #3b310f;
+  --color-status-danger: #fe8480;
+  --color-status-danger-surface: #3d1918;
+  --color-status-info: #93c6ec;
+  --color-status-info-surface: #132f41;
+  --color-status-neutral: #f8fcf9;
+  --color-status-neutral-surface: #333c33;
+
+  --color-overlay-scrim: rgba(0, 0, 0, 0.72);
+}

@@ -1,0 +1,112 @@
+services:
+  app:
+    image: starterkit-app:${RELEASE_TAG:-local}
+    build:
+      context: .
+      target: app
+      args:
+        RELEASE_VERSION: ${RELEASE_TAG:-local}
+        VCS_REF: ${VCS_REF:-unknown}
+    environment:
+      APP_NAME: ${APP_NAME:-Starter Kit}
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${APP_KEY:?Set APP_KEY from a secret manager}
+      APP_URL: ${APP_URL:?Set APP_URL to the public HTTPS URL}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_DATABASE: ${DB_DATABASE:-starterkit}
+      DB_USERNAME: ${DB_USERNAME:?Set DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD from a secret manager}
+      SESSION_DRIVER: database
+      SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-true}
+      CACHE_STORE: file
+      QUEUE_CONNECTION: sync
+      STARTERKIT_MODULE_STATE: /var/lib/starterkit/modules.json
+      MAIL_MAILER: ${MAIL_MAILER:-smtp}
+      MAIL_HOST: ${MAIL_HOST:?Set MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_SCHEME: ${MAIL_SCHEME:-smtp}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:?Set MAIL_FROM_ADDRESS}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Starter Kit}
+      STARTERKIT_VERSION: ${STARTERKIT_VERSION:-1.0.0}
+    volumes:
+      - module-state:/var/lib/starterkit
+    command: ["php-fpm", "-F"]
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [application]
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/www/html/storage/framework/cache/data:uid=33,gid=33,mode=0770
+      - /var/www/html/storage/framework/sessions:uid=33,gid=33,mode=0770
+      - /var/www/html/storage/framework/views:uid=33,gid=33,mode=0770
+      - /var/www/html/storage/logs:uid=33,gid=33,mode=0770
+      - /var/www/html/bootstrap/cache:uid=33,gid=33,mode=0770
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "php", "-r", "$$s=@fsockopen('127.0.0.1',9000); exit($$s?0:1);"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  web:
+    image: starterkit-web:${RELEASE_TAG:-local}
+    build:
+      context: .
+      target: web
+      args:
+        RELEASE_VERSION: ${RELEASE_TAG:-local}
+        VCS_REF: ${VCS_REF:-unknown}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    depends_on:
+      app:
+        condition: service_healthy
+    networks: [application]
+    read_only: true
+    tmpfs:
+      - /tmp:uid=101,gid=101,mode=0770
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/up"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  db:
+    image: mariadb:11.8
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE:-starterkit}
+      MARIADB_USER: ${DB_USERNAME:?Set DB_USERNAME}
+      MARIADB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD from a secret manager}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD from a secret manager}
+    volumes:
+      - database-data:/var/lib/mysql
+    networks: [application]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+
+networks:
+  application:
+
+volumes:
+  database-data:
+  module-state:

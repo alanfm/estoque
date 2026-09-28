@@ -1,0 +1,133 @@
+name: Foundation (Act local)
+
+on: push
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      COMPOSE_PROJECT_NAME: starterkit-act
+      COMPOSE_ANSI: never
+      COMPOSE_PROGRESS: plain
+      APP_PORT: 18081
+      VITE_PORT: 18082
+      DB_FORWARD_PORT: 13308
+      MAILPIT_PORT: 18026
+      E2E_BASE_URL: http://localhost:18081
+      E2E_ADMIN_EMAIL: admin@example.com
+      E2E_ADMIN_PASSWORD: senha-de-teste-1234
+    steps:
+      - name: Checkout local limpo
+        run: |
+          test -d "$ACT_REPO/.git"
+          git clone --local --no-hardlinks "$ACT_REPO" .
+          if [ "${ACT_INCLUDE_WORKTREE:-0}" = 1 ]; then
+            git -C "$ACT_REPO" diff --binary HEAD | git apply
+            git -C "$ACT_REPO" ls-files --others --exclude-standard -z | rsync -a --from0 --files-from=- "$ACT_REPO/" .
+          fi
+      - name: Prepare local environment
+        run: |
+          test -f composer.lock && test -f package-lock.json
+          cp .env.example .env
+      - name: Bootstrap Composer with PHP 8.5
+        run: docker compose --profile bootstrap run --build --rm --no-deps composer composer install --no-interaction --prefer-dist
+      - name: Start Sail and MariaDB
+        run: docker compose up -d --build
+      - name: Prepare application and database
+        run: |
+          if grep -q '^APP_KEY=$' .env; then
+            ./vendor/bin/sail artisan key:generate
+          fi
+          ./vendor/bin/sail artisan migrate --force
+      - name: Frontend quality and production build
+        run: |
+          ./vendor/bin/sail npm ci
+          ./vendor/bin/sail npm run format:check
+          ./vendor/bin/sail npm run lint
+          ./vendor/bin/sail npm run typecheck
+          ./vendor/bin/sail npm test
+          ./vendor/bin/sail npm run build
+      - name: Backend quality and MariaDB integration
+        run: |
+          ./vendor/bin/sail composer format:check
+          ./vendor/bin/sail composer analyse
+          ./vendor/bin/sail artisan core:modules:diagnose
+          ./vendor/bin/sail artisan test
+      - name: Seed administrator for end-to-end tests
+        run: |
+          ./vendor/bin/sail artisan core:sync-permissions
+          printf '%s\n%s\n' "$E2E_ADMIN_PASSWORD" "$E2E_ADMIN_PASSWORD" | \
+            ./vendor/bin/sail artisan core:bootstrap-admin "$E2E_ADMIN_EMAIL" "Administrador E2E"
+      - name: End-to-end critical flows
+        run: |
+          docker compose exec -T --user root -e PLAYWRIGHT_BROWSERS_PATH=/tmp/playwright-browsers laravel.test npx playwright install --with-deps chromium
+          trap "docker compose exec -T --user root laravel.test sh -c 'chmod -R a+rwX tests/e2e/.auth test-results 2>/dev/null || true'" EXIT
+          docker compose exec -T --user root -e PLAYWRIGHT_BROWSERS_PATH=/tmp/playwright-browsers -e E2E_BASE_URL=http://localhost laravel.test npx playwright test
+      - name: Smoke test on same origin
+        run: |
+          curl --fail --silent --show-error "http://localhost:${APP_PORT}/" > /dev/null
+          curl --fail --silent --show-error "http://localhost:${APP_PORT}/up" > /dev/null
+          test "$(curl --silent --show-error --output /dev/null --write-out '%{http_code} %{content_type}' "http://localhost:${APP_PORT}/login")" = '200 text/html; charset=utf-8'
+          test "$(curl --silent --show-error --output /dev/null --write-out '%{http_code} %{content_type}' "http://localhost:${APP_PORT}/api/v1/missing")" = '404 application/json'
+      - name: Build production images from lockfiles
+        env:
+          APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+          APP_URL: http://localhost:18083
+          APP_PORT: 18083
+          DB_USERNAME: starterkit_act_prod
+          DB_PASSWORD: starterkit_act_prod_password
+          DB_ROOT_PASSWORD: starterkit_act_prod_root_password
+          MAIL_HOST: mail.example.test
+          MAIL_FROM_ADDRESS: noreply@example.test
+          RELEASE_TAG: act-${{ github.sha }}
+          VCS_REF: ${{ github.sha }}
+          SESSION_SECURE_COOKIE: "false"
+        run: |
+          docker compose --project-name starterkit-act-prod -f compose.production.yaml build
+      - name: Smoke test production images without Sail
+        env:
+          APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+          APP_URL: http://localhost:18083
+          APP_PORT: 18083
+          DB_USERNAME: starterkit_act_prod
+          DB_PASSWORD: starterkit_act_prod_password
+          DB_ROOT_PASSWORD: starterkit_act_prod_root_password
+          MAIL_HOST: mail.example.test
+          MAIL_FROM_ADDRESS: noreply@example.test
+          RELEASE_TAG: act-${{ github.sha }}
+          VCS_REF: ${{ github.sha }}
+          SESSION_SECURE_COOKIE: "false"
+          E2E_ADMIN_EMAIL: production-admin@example.test
+          E2E_ADMIN_PASSWORD: production-test-password-1234
+        run: |
+          docker compose --project-name starterkit-act-prod -f compose.production.yaml up -d db
+          docker compose --project-name starterkit-act-prod -f compose.production.yaml run --rm app php artisan migrate --force
+          docker compose --project-name starterkit-act-prod -f compose.production.yaml run --rm app php artisan core:sync-permissions
+          printf '%s\n%s\n' "$E2E_ADMIN_PASSWORD" "$E2E_ADMIN_PASSWORD" | \
+            docker compose --project-name starterkit-act-prod -f compose.production.yaml run --rm -T app \
+              php artisan core:bootstrap-admin "$E2E_ADMIN_EMAIL" "Administrador de smoke test"
+          docker compose --project-name starterkit-act-prod -f compose.production.yaml up -d --wait app web
+          curl --fail --silent --show-error http://localhost:18083/up > /dev/null
+          curl --fail --silent --show-error http://localhost:18083/ > /dev/null
+          test "$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' http://localhost:18083/login)" = '200'
+          test "$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' http://localhost:18083/sanctum/csrf-cookie)" = '204'
+          test "$(curl --silent --show-error --header 'Accept: application/json' --output /dev/null --write-out '%{http_code}' http://localhost:18083/api/v1/customers)" = '401'
+          curl --fail --silent --show-error http://localhost:18083/build/manifest.json | \
+            python3 -c 'import json,sys; assert "modules/acme/customers/resources/spa/pages/CustomersPage.tsx" in json.load(sys.stdin)'
+      - name: Stop containers
+        if: always()
+        env:
+          APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+          APP_URL: http://localhost:18083
+          APP_PORT: 18083
+          DB_USERNAME: starterkit_act_prod
+          DB_PASSWORD: starterkit_act_prod_password
+          DB_ROOT_PASSWORD: starterkit_act_prod_root_password
+          MAIL_HOST: mail.example.test
+          MAIL_FROM_ADDRESS: noreply@example.test
+          RELEASE_TAG: act-${{ github.sha }}
+          VCS_REF: ${{ github.sha }}
+          SESSION_SECURE_COOKIE: "false"
+        run: |
+          docker compose --project-name starterkit-act-prod -f compose.production.yaml down --volumes
+          docker compose down --volumes

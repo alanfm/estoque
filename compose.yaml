@@ -1,0 +1,58 @@
+services:
+  composer:
+    build:
+      context: ./docker/bootstrap
+      dockerfile: Dockerfile
+    user: '${WWWUSER:-1000}:${WWWGROUP:-1000}'
+    working_dir: /var/www/html
+    volumes:
+      - '.:/var/www/html'
+    profiles: [bootstrap]
+  laravel.test:
+    build:
+      context: ./vendor/laravel/sail/runtimes/8.5
+      dockerfile: Dockerfile
+      args:
+        WWWGROUP: '${WWWGROUP:-1000}'
+    image: starterkit-sail-8.5/app
+    ports:
+      - '${APP_PORT:-8080}:80'
+      - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
+    environment:
+      WWWUSER: '${WWWUSER:-1000}'
+      LARAVEL_SAIL: 1
+    volumes:
+      - '.:/var/www/html'
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    networks: [sail]
+  mariadb:
+    image: mariadb:11.8
+    ports:
+      - '${DB_FORWARD_PORT:-3307}:3306'
+    environment:
+      MARIADB_ROOT_PASSWORD: '${DB_PASSWORD:-password}'
+      MARIADB_DATABASE: '${DB_DATABASE:-starterkit}'
+      MARIADB_USER: '${DB_USERNAME:-sail}'
+      MARIADB_PASSWORD: '${DB_PASSWORD:-password}'
+    volumes:
+      - mariadb-data:/var/lib/mysql
+      - ./docker/mariadb/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
+      interval: 5s
+      retries: 10
+    networks: [sail]
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - '${MAILPIT_PORT:-8025}:8025'
+    networks: [sail]
+networks:
+  sail:
+    driver: bridge
+volumes:
+  mariadb-data:

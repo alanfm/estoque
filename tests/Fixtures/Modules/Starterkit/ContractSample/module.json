@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "name": "contract-sample",
+  "displayName": "Amostra de Contrato",
+  "version": "1.0.0",
+  "core": "^1.0.0",
+  "apiPrefix": "contract-sample",
+  "frontendEntry": "resources/spa/module.ts",
+  "dependencies": [],
+  "permissions": ["contract-sample.viewAny"]
+}
