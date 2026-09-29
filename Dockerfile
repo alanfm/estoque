@@ -54,9 +54,9 @@ COPY docker/production/php-fpm.conf /usr/local/etc/php-fpm.d/zz-starterkit.conf
 COPY docker/production/php.ini /usr/local/etc/php/conf.d/zz-starterkit.ini
 
 RUN mkdir -p storage/app storage/framework/cache/data storage/framework/sessions \
-        storage/framework/views storage/logs bootstrap/cache /var/lib/starterkit \
-    && chown -R www-data:www-data storage bootstrap/cache /var/lib/starterkit \
-    && chmod -R ug+rwX storage bootstrap/cache /var/lib/starterkit
+        storage/framework/views storage/logs bootstrap/cache /var/lib/starterkit /var/lib/starterkit-files \
+    && chown -R www-data:www-data storage bootstrap/cache /var/lib/starterkit /var/lib/starterkit-files \
+    && chmod -R ug+rwX storage bootstrap/cache /var/lib/starterkit /var/lib/starterkit-files
 
 ENV APP_ENV=production APP_DEBUG=false LOG_LEVEL=info
 LABEL org.opencontainers.image.version="${RELEASE_VERSION}" \

@@ -25,6 +25,11 @@ const module: FrontendModule = {
       permission: "inventory.reports.view",
     },
     {
+      path: "admin/inventory/imports",
+      load: () => import("./pages/ImportsPage"),
+      permission: "inventory.imports.view",
+    },
+    {
       path: "admin/inventory/categories",
       load: () => import("./pages/CategoriesPage"),
       permission: "inventory.categories.viewAny",
@@ -94,6 +99,13 @@ const module: FrontendModule = {
       icon: "FileText",
       permission: "inventory.reports.view",
       order: 64,
+    },
+    {
+      to: "/admin/inventory/imports",
+      label: "Importação",
+      icon: "FileText",
+      permission: "inventory.imports.view",
+      order: 65,
     },
     {
       to: "/admin/inventory/movements",

@@ -2,6 +2,7 @@
 
 use Acme\Inventory\Http\Controllers\CatalogController;
 use Acme\Inventory\Http\Controllers\InventoryCorrectionController;
+use Acme\Inventory\Http\Controllers\InventoryImportController;
 use Acme\Inventory\Http\Controllers\InventoryReportsController;
 use Acme\Inventory\Http\Controllers\MovementController;
 use Acme\Inventory\Http\Controllers\ReplenishmentController;
@@ -29,4 +30,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/movements/{movement}/cancel', [MovementController::class, 'cancel']);
     Route::post('/adjustments', [InventoryCorrectionController::class, 'adjust']);
     Route::post('/movements/{movement}/reverse', [InventoryCorrectionController::class, 'reverse']);
+    Route::get('/imports', [InventoryImportController::class, 'index']);
+    Route::post('/imports/analyze', [InventoryImportController::class, 'analyze']);
+    Route::get('/imports/{batch}', [InventoryImportController::class, 'show']);
+    Route::patch('/imports/{batch}/resolutions', [InventoryImportController::class, 'resolve']);
+    Route::post('/imports/{batch}/commit', [InventoryImportController::class, 'commit']);
 });

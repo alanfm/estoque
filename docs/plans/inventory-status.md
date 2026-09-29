@@ -115,3 +115,14 @@ P07 aceita pelo usuário em 29/09/2026, com a limitação da ação de aplicaç�
 | Verificações | aprovadas localmente | `InventoryReportsTest`: 4 testes/48 assertions; suíte Inventory: 17 testes/161 assertions; Vitest: 58 testes. Pint, PHPStan, Prettier, ESLint, TypeScript, build e `composer check-platform-reqs --no-dev` passam; build mantém alerta de chunk >500 kB. Composer validate apenas reporta ausência de licença. `composer require` não reportou advisories de segurança. |
 
 P08 aceita pelo usuário em 29/09/2026. Permanecem explícitas as verificações de reconstrução da imagem Docker, revisão visual/E2E e medição de desempenho. Nenhuma exportação contém payload de auditoria completo ou dados reais importados.
+
+## P09 — Importação assistida e saneamento
+
+| Item | Estado | Evidência / próxima ação |
+|---|---|---|
+| P09.2 Persistência privada | aceito localmente; operacional pendente | Disco `inventory-imports` fora de `public`, volume persistente dedicado em `compose.production.yaml` e ownership `www-data` preparado no Dockerfile. Imagem não reconstruída; escrita/permanência sob `read_only` ainda não exercitadas. |
+| P09.3–P09.9 Parser, lote, saneamento e commit | aceito para contrato canônico sintético | Leitor XLSX versionado com limites de expansão/linhas/colunas/abas, sem execução de fórmulas/macros; hash idempotente, prévia por linha, correção estreita de datas, associação explícita item/variante, commit idempotente em transação e auditoria. Importação preserva datas ausentes e deltas negativos históricos. |
+| P09.1 Estrutura real da fonte | bloqueado por autorização | Planilha fonte não foi aberta nem copiada. O contrato canônico provisório ainda não mapeia as abas/cabeçalhos reais; só fazê-lo após autorização explícita para inspecionar a fonte. |
+| P09.10 Interface e testes | implementado localmente, limitado | Tela lazy permite upload, prévia paginada, mapeamento item/variante/tipo e confirmação. `InventoryImportTest` cobre XLSX sintético, data NULL, correção condicional 2003→2023, saldo/custo, persistência, commit e repetição idempotente: 1 teste/20 assertions. |
+
+P09 aceita pelo usuário em 29/09/2026 para a implementação com contrato canônico e fixtures sintéticas. O aceite não autoriza acesso/importação da fonte real nem equivale à homologação operacional. Nenhum dado real foi acessado ou importado. A migration de `effective_on` aceita NULL e seu rollback bloqueia se houver lançamentos sem data. Ainda faltam reconstruir/testar imagem Docker, exercício real de escrita/permanência/restauração e autorização para inspecionar a planilha e adaptar o leitor. Ver `docs/modules/inventory/importacao.md`.

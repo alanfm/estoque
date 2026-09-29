@@ -25,6 +25,7 @@ services:
       CACHE_STORE: file
       QUEUE_CONNECTION: sync
       STARTERKIT_MODULE_STATE: /var/lib/starterkit/modules.json
+      INVENTORY_IMPORTS_PATH: /var/lib/starterkit-files
       MAIL_MAILER: ${MAIL_MAILER:-smtp}
       MAIL_HOST: ${MAIL_HOST:?Set MAIL_HOST}
       MAIL_PORT: ${MAIL_PORT:-587}
@@ -36,6 +37,7 @@ services:
       STARTERKIT_VERSION: ${STARTERKIT_VERSION:-1.1.0}
     volumes:
       - module-state:/var/lib/starterkit
+      - inventory-imports:/var/lib/starterkit-files
     command: ["php-fpm", "-F"]
     depends_on:
       db:
@@ -110,3 +112,4 @@ networks:
 volumes:
   database-data:
   module-state:
+  inventory-imports:
