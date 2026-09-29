@@ -11,7 +11,7 @@ export interface MovementLine {
 }
 export interface MovementDraft {
   id: number;
-  type: "ENTRY" | "ISSUE";
+  type: "ENTRY" | "ISSUE" | "ADJUSTMENT" | "REVERSAL";
   status: string;
   location_id: number;
   version: number;
@@ -23,7 +23,8 @@ export interface MovementDraft {
   lines: Array<{
     id: number;
     variant_id: number;
-    quantity: number;
+    quantity: number | null;
+    counted_quantity?: number | null;
     snapshot: Record<string, string>;
   }>;
 }
@@ -70,6 +71,35 @@ export const movementService = {
         `/inventory/movements/${id}/cancel`,
         { method: "POST", body: {} },
       )
+    ).data;
+  },
+  async adjust(input: {
+    locationId: string;
+    variantId: string;
+    countedQuantity: number;
+    expectedBalanceVersion: number;
+    reason: string;
+  }) {
+    return (
+      await apiRequest<ApiResource<Record<string, number>>>(
+        "/inventory/adjustments",
+        {
+          method: "POST",
+          headers: { "Idempotency-Key": crypto.randomUUID() },
+          body: input,
+        },
+      )
+    ).data;
+  },
+  async reverse(id: string, reason: string) {
+    return (
+      await apiRequest<
+        ApiResource<{ movementId: number; reversalId: number; status: string }>
+      >(`/inventory/movements/${id}/reverse`, {
+        method: "POST",
+        headers: { "Idempotency-Key": crypto.randomUUID() },
+        body: { reason },
+      })
     ).data;
   },
 };

@@ -50,6 +50,11 @@ const module: FrontendModule = {
       load: () => import("./pages/MovementDetailPage"),
       permission: "inventory.movements.view",
     },
+    {
+      path: "admin/inventory/adjustments/new",
+      load: () => import("./pages/AdjustmentCreatePage"),
+      permission: "inventory.adjustments.create",
+    },
   ],
   navigation: [
     {
@@ -72,6 +77,13 @@ const module: FrontendModule = {
       icon: "ArrowLeftRight",
       permission: "inventory.movements.viewAny",
       order: 62,
+    },
+    {
+      to: "/admin/inventory/adjustments/new",
+      label: "Contagem de estoque",
+      icon: "ClipboardCheck",
+      permission: "inventory.adjustments.create",
+      order: 63,
     },
   ],
 };

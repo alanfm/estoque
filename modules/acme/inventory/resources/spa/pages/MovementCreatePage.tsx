@@ -11,7 +11,7 @@ import { movementService, type DraftInput } from "../services/movementService";
 function MovementCreateForm({ type }: { type: "ENTRY" | "ISSUE" }) {
   const navigate = useNavigate();
   const loader = useCallback(
-    (signal: AbortSignal) => catalogService.items("", 1, "", signal),
+    (signal: AbortSignal) => catalogService.items("", 1, "", signal, 100),
     [],
   );
   const { data, loading, error, reload } = useAsync(loader);

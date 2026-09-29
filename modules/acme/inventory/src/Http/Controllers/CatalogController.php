@@ -46,7 +46,7 @@ final class CatalogController
     {
         $this->authorize($request, 'viewAny', InventoryItem::class);
         $data = $request->validate(['search' => ['nullable', 'string', 'max:120'], 'categoryId' => ['nullable', 'integer', 'min:1'], 'active' => ['nullable', 'boolean'], 'perPage' => ['nullable', 'integer', 'min:1', 'max:100']]);
-        $rows = InventoryItem::query()->with('category')
+        $rows = InventoryItem::query()->with(['category', 'variants.balances'])
             ->when($data['search'] ?? null, fn ($query, $term) => $query->where(fn ($q) => $q->where('code', 'like', "%{$term}%")->orWhere('name', 'like', "%{$term}%")))
             ->when($data['categoryId'] ?? null, fn ($query, $categoryId) => $query->where('category_id', $categoryId))
             ->when(array_key_exists('active', $data), fn ($query) => $query->where('active', $data['active']))

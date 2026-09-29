@@ -2,7 +2,7 @@
 
 **Raiz obrigatória do projeto:** `~/Projects/estoque`.
 **Referência técnica:** `alanfm/starterkit`, revisão consultada `ff1812f0dbfd95e84243d738768262ca0d36e1af`; o checkout em `~/Projects/starterkit` não é destino de alterações.
-**Estado:** P00 permanece bloqueada pela falha Act registrada; P01 concluída localmente; P02, P03, P04 e P05 aceitas pelo usuário. A falha Act e as limitações de concorrência/retroatividade permanecem explícitas.
+**Estado:** P00 permanece bloqueada pela falha Act registrada; P01 concluída localmente; P02–P06 aceitas pelo usuário. A falha Act e as limitações de concorrência/retroatividade permanecem explícitas.
 
 P02 foi iniciada explicitamente pelo usuário antes da resolução do gate P00/P01. Essa decisão não equivale ao aceite do gate anterior; a falha Act segue pendente.
 
@@ -81,3 +81,14 @@ P04 aceita pelo usuário em 28/09/2026, com as limitações acima explícitas. P
 | Testes e checks focais | aprovados localmente | `InventoryMovementDraftTest`: 1 teste/15 assertions, incluindo rascunho incompleto, repetição da Idempotency-Key, propriedade, descarte e ausência de efeito no ledger. Pint, PHPStan, lint, typecheck, Vitest sentinela e build passaram. Build mantém alerta de chunk >500 kB. |
 
 P05 aceita pelo usuário em 28/09/2026, com as limitações registradas acima. Permanecem pendentes os testes P04 de concorrência real e retroatividade, validação completa na confirmação (origem/documento/OS/custo/data/saldo), endpoints/UI de confirmação e edição visual, além de testes adicionais para conflitos de versão, permissões e regras de negócio. A confirmação operacional continua bloqueada até resolver as limitações de integridade. Nenhum saldo operacional foi alterado.
+
+## P06 — Contagem, ajustes e estornos
+
+| Item | Estado | Evidência / próxima ação |
+|---|---|---|
+| P06.1–P06.2 Contagem física | implementado localmente | Endpoint idempotente usa `expectedBalanceVersion`, calcula delta sob lock de item/saldo e exige motivo. Contagem sem diferença gera movimento/auditoria sem ledger zero; resposta de saldo inclui versão. |
+| P06.3–P06.5 Estorno integral | implementado localmente | Endpoint idempotente bloqueia original, preserva ledger original, grava linhas/lançamentos com sinais opostos, atualiza saldo e audita original/compensação. Índice único impede segundo estorno; resultado negativo retorna conflito sem commit. |
+| P06.6 Interface | implementado localmente | Tela de contagem mostra saldo atual/prévia e conflito por versão; detalhe do movimento permite estorno condicionado à permissão, com motivo obrigatório e aviso de impacto no saldo. |
+| Testes e checks focais | aprovados localmente | Suíte Inventory: 9 testes/76 assertions (inclui permissão, versão obsoleta, delta zero, estorno idempotente/duplicado e bloqueio de saldo negativo); Pint, PHPStan, Prettier, ESLint, TypeScript, Vitest (58 testes) e build aprovados. Build mantém aviso de chunk >500 kB. |
+
+P06 aceita pelo usuário em 29/09/2026. A suíte Inventory e os checks de qualidade foram executados; não foi adicionado/executado teste com dois processos reais para reversões concorrentes nem demonstrado o comportamento dos locks MariaDB. Essa limitação permanece explícita. Confirmação de ENTRY/ISSUE e validação histórica P04 continuam pendentes; nenhum dado real foi alterado.

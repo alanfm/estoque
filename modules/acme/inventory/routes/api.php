@@ -1,6 +1,7 @@
 <?php
 
 use Acme\Inventory\Http\Controllers\CatalogController;
+use Acme\Inventory\Http\Controllers\InventoryCorrectionController;
 use Acme\Inventory\Http\Controllers\MovementController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,4 +20,6 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/movements/{movement}', [MovementController::class, 'show']);
     Route::patch('/movements/{movement}', [MovementController::class, 'update']);
     Route::post('/movements/{movement}/cancel', [MovementController::class, 'cancel']);
+    Route::post('/adjustments', [InventoryCorrectionController::class, 'adjust']);
+    Route::post('/movements/{movement}/reverse', [InventoryCorrectionController::class, 'reverse']);
 });

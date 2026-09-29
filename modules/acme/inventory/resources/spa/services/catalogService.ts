@@ -18,7 +18,7 @@ export interface Variant {
   description: string;
   active: boolean;
   version: number;
-  balances?: { locationId: string; quantity: number }[];
+  balances?: { locationId: string; quantity: number; version: number }[];
 }
 export interface Item {
   id: string;
@@ -59,9 +59,20 @@ export const catalogService = {
       )
     ).data;
   },
-  items(search = "", page = 1, categoryId = "", signal?: AbortSignal) {
+  items(
+    search = "",
+    page = 1,
+    categoryId = "",
+    signal?: AbortSignal,
+    perPage = 20,
+  ) {
     return apiRequest<Paginated<Item>>("/inventory/items", {
-      query: { search, page: String(page), perPage: "20", categoryId },
+      query: {
+        search,
+        page: String(page),
+        perPage: String(perPage),
+        categoryId,
+      },
       signal,
     });
   },

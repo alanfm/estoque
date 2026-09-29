@@ -3,9 +3,13 @@ import { Link, useParams } from "react-router";
 import { Button } from "../../../../../../resources/spa/components/actions/Button";
 import { PageHeader } from "../../../../../../resources/spa/components/navigation/PageHeader";
 import { useAsync } from "../../../../../../resources/spa/hooks/useAsync";
+import { useSession } from "@starterkit/module-kit";
 import { movementService } from "../services/movementService";
 
 export default function MovementDetailPage() {
+  const { state } = useSession();
+  const canReverse =
+    state.user?.permissions.includes("inventory.movements.reverse") ?? false;
   const { id = "" } = useParams();
   const loader = useCallback(
     (signal: AbortSignal) => movementService.get(id, signal),
@@ -14,6 +18,7 @@ export default function MovementDetailPage() {
   const { data: movement, loading, error, reload } = useAsync(loader);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [reason, setReason] = useState("");
   async function cancel() {
     if (!movement) return;
     setBusy(true);
@@ -31,6 +36,25 @@ export default function MovementDetailPage() {
       setBusy(false);
     }
   }
+  async function reverse(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!movement) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      await movementService.reverse(String(movement.id), reason);
+      setReason("");
+      reload();
+    } catch (caught) {
+      setMessage(
+        caught instanceof Error
+          ? caught.message
+          : "Não foi possível estornar o movimento.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
   if (loading && !movement)
     return <p role="status">Carregando movimentação…</p>;
   if (error || !movement)
@@ -43,7 +67,7 @@ export default function MovementDetailPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`${movement.type === "ENTRY" ? "Entrada" : "Saída"} #${movement.id}`}
+        title={`${movement.type === "ENTRY" ? "Entrada" : movement.type === "ISSUE" ? "Saída" : movement.type === "ADJUSTMENT" ? "Ajuste" : "Estorno"} #${movement.id}`}
         breadcrumbs={[
           { label: "Movimentos", to: "/admin/inventory/movements" },
           { label: `#${movement.id}` },
@@ -72,7 +96,8 @@ export default function MovementDetailPage() {
           <ul className="space-y-2">
             {movement.lines.map((line) => (
               <li key={line.id} className="rounded border p-3">
-                {line.snapshot.code} — {line.snapshot.itemName}: {line.quantity}{" "}
+                {line.snapshot.code} — {line.snapshot.itemName}:{" "}
+                {line.quantity ?? `contagem ${line.counted_quantity ?? 0}`}{" "}
                 {line.snapshot.unit}{" "}
                 <small>
                   (
@@ -101,6 +126,34 @@ export default function MovementDetailPage() {
           </span>
         </div>
       )}
+      {canReverse &&
+        movement.status === "POSTED" &&
+        movement.type !== "REVERSAL" && (
+          <form
+            className="grid max-w-2xl gap-3"
+            onSubmit={(event) => void reverse(event)}
+          >
+            <h2 className="text-lg font-semibold">Estorno integral</h2>
+            <p>
+              O sistema lançará a compensação de todas as linhas. A operação
+              será recusada se deixar alguma variante com saldo negativo.
+            </p>
+            <label htmlFor="reverse-reason">Motivo obrigatório</label>
+            <textarea
+              id="reverse-reason"
+              required
+              maxLength={5000}
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              className="w-full rounded border p-2"
+            />
+            <div>
+              <Button type="submit" variant="danger" loading={busy}>
+                Estornar movimento
+              </Button>
+            </div>
+          </form>
+        )}
       <Link className="underline" to="/admin/inventory/movements">
         Voltar à lista
       </Link>
