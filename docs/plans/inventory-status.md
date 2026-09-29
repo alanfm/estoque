@@ -92,3 +92,14 @@ P05 aceita pelo usuário em 28/09/2026, com as limitações registradas acima. P
 | Testes e checks focais | aprovados localmente | Suíte Inventory: 9 testes/76 assertions (inclui permissão, versão obsoleta, delta zero, estorno idempotente/duplicado e bloqueio de saldo negativo); Pint, PHPStan, Prettier, ESLint, TypeScript, Vitest (58 testes) e build aprovados. Build mantém aviso de chunk >500 kB. |
 
 P06 aceita pelo usuário em 29/09/2026. A suíte Inventory e os checks de qualidade foram executados; não foi adicionado/executado teste com dois processos reais para reversões concorrentes nem demonstrado o comportamento dos locks MariaDB. Essa limitação permanece explícita. Confirmação de ENTRY/ISSUE e validação histórica P04 continuam pendentes; nenhum dado real foi alterado.
+
+## P07 — Reposição por consumo e prazo
+
+| Item | Estado | Evidência / próxima ação |
+|---|---|---|
+| P07.1 Configuração auditada | implementado localmente | Endpoint protegido por `inventory.items.configureReplenishment`, versão otimista e auditoria before/after. Teste cobre permissão, conflito de versão e auditoria. |
+| P07.2–P07.6 Consulta e regra | implementado localmente | Endpoint de recomendação calcula janela completa anterior ao dia corrente, consumo ISSUE líquido de reversões de ISSUE, segurança e teto; distingue parâmetros ausentes e cobertura insuficiente. Testes cobrem 90/180×30+5, reversão dentro/fora da janela, movimento no dia corrente, consumo zero, segurança zero, saldo negativo, parâmetro NULL e histórico insuficiente. |
+| P07.7 Interface | aceito com limitação | Detalhe do item mostra situação, saldo, período, consumo, prazo, segurança, sugestão e permite configurar parâmetros com permissão. A ação explícita para aplicar a sugestão fica fora desta entrega. |
+| Verificações | aprovadas localmente | `InventoryReplenishmentTest`: 4 testes/37 assertions; Pint, PHPStan, Prettier, ESLint, TypeScript e Vitest sentinela passam. |
+
+P07 aceita pelo usuário em 29/09/2026, com a limitação da ação de aplicação explícita registrada acima. Nenhum parâmetro efetivo foi configurado e nenhum saldo operacional foi alterado. O cálculo permanece sob demanda, sem scheduler/cache. A ação de aplicar sugestão pode ser tratada em entrega futura.

@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $purchase_lead_time_days
  * @property int|null $safety_stock
  * @property int $recommendation_window_days
+ * @property string|null $history_coverage_from
  */
 final class InventoryItem extends Model
 {

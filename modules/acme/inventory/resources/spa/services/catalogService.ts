@@ -36,7 +36,48 @@ export interface Item {
   variants: Variant[];
 }
 
+export interface ReplenishmentRecommendation {
+  itemId: string;
+  situation:
+    "INCONSISTENT" | "OUT_OF_STOCK" | "NOT_CONFIGURED" | "REPLENISHMENT" | "OK";
+  stock: number;
+  minimumStock: number | null;
+  windowDays: number;
+  from: string;
+  to: string;
+  computedAt: string;
+  purchaseLeadTimeDays: number | null;
+  safetyStock: number | null;
+  itemVersion: number;
+  status: "CALCULABLE" | "NOT_CALCULABLE" | "INSUFFICIENT_HISTORY";
+  reason: string | null;
+  consumption?: number;
+  averageDailyConsumption?: number;
+  suggestedMinimumStock?: number;
+  historyCovered?: boolean;
+}
+
 export const catalogService = {
+  replenishment(itemId: string, signal?: AbortSignal) {
+    return apiRequest<{ data: ReplenishmentRecommendation }>(
+      `/inventory/items/${itemId}/replenishment`,
+      { signal },
+    );
+  },
+  async configureReplenishment(
+    item: Item,
+    input: {
+      minimumStock: number | null;
+      purchaseLeadTimeDays: number | null;
+      safetyStock: number | null;
+      recommendationWindowDays: number;
+    },
+  ) {
+    return apiRequest(`/inventory/items/${item.id}/replenishment`, {
+      method: "PATCH",
+      body: { ...input, version: item.version },
+    });
+  },
   categories(search = "", signal?: AbortSignal) {
     return apiRequest<Paginated<Category>>("/inventory/categories", {
       query: { search, perPage: "100" },

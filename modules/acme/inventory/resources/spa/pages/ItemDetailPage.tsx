@@ -5,7 +5,11 @@ import { Field } from "../../../../../../resources/spa/components/forms/Field";
 import { Input } from "../../../../../../resources/spa/components/forms/Input";
 import { PageHeader } from "../../../../../../resources/spa/components/navigation/PageHeader";
 import { useAsync } from "../../../../../../resources/spa/hooks/useAsync";
-import { catalogService, type Variant } from "../services/catalogService";
+import {
+  catalogService,
+  type Variant,
+  type ReplenishmentRecommendation,
+} from "../services/catalogService";
 import { can } from "../../../../../../resources/spa/lib/permissions";
 import { useSession } from "../../../../../../resources/spa/stores/session/SessionContext";
 
@@ -25,6 +29,17 @@ export default function ItemDetailPage() {
     [],
   );
   const { data: categories } = useAsync(categoryLoader);
+  const replenishmentLoader = useCallback(
+    async (signal: AbortSignal) =>
+      (await catalogService.replenishment(id, signal)).data,
+    [id],
+  );
+  const {
+    data: recommendation,
+    loading: replenishmentLoading,
+    error: replenishmentError,
+    reload: reloadReplenishment,
+  } = useAsync<ReplenishmentRecommendation>(replenishmentLoader);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   async function saveItem(event: React.FormEvent<HTMLFormElement>) {
@@ -88,6 +103,35 @@ export default function ItemDetailPage() {
       );
     }
   }
+  async function saveReplenishment(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!item) return;
+    const form = new FormData(event.currentTarget);
+    const numberOrNull = (key: string) => {
+      const value = String(form.get(key) ?? "").trim();
+      return value === "" ? null : Number(value);
+    };
+    setSaving(true);
+    setMessage("");
+    try {
+      await catalogService.configureReplenishment(item, {
+        minimumStock: numberOrNull("minimumStock"),
+        purchaseLeadTimeDays: numberOrNull("purchaseLeadTimeDays"),
+        safetyStock: numberOrNull("safetyStock"),
+        recommendationWindowDays: Number(form.get("recommendationWindowDays")),
+      });
+      reload();
+      reloadReplenishment();
+    } catch (caught) {
+      setMessage(
+        caught instanceof Error
+          ? caught.message
+          : "Não foi possível salvar os parâmetros de reposição.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
   if (loading && !item) return <p role="status">Carregando item…</p>;
   if (error || !item)
     return (
@@ -107,6 +151,137 @@ export default function ItemDetailPage() {
         ]}
       />
       {message && <p role="alert">{message}</p>}
+      <section
+        className="space-y-4 rounded border p-4"
+        aria-labelledby="replenishment-title"
+      >
+        <div>
+          <h2 id="replenishment-title" className="text-xl font-semibold">
+            Reposição
+          </h2>
+          <p className="text-sm">
+            Sugestão calculada sobre dias completos; o mínimo efetivo não é
+            alterado automaticamente.
+          </p>
+        </div>
+        {replenishmentLoading && !recommendation ? (
+          <p role="status">Calculando recomendação…</p>
+        ) : replenishmentError || !recommendation ? (
+          <p role="alert">
+            Não foi possível carregar a recomendação.{" "}
+            <button onClick={reloadReplenishment}>Tentar novamente</button>
+          </p>
+        ) : (
+          <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <dt className="font-medium">Situação</dt>
+              <dd>{situationLabel(recommendation.situation)}</dd>
+            </div>
+            <div>
+              <dt className="font-medium">Saldo agregado</dt>
+              <dd>
+                {recommendation.stock} {item.unit}
+              </dd>
+            </div>
+            <div>
+              <dt className="font-medium">Mínimo efetivo</dt>
+              <dd>{recommendation.minimumStock ?? "Não configurado"}</dd>
+            </div>
+            <div>
+              <dt className="font-medium">Período analisado</dt>
+              <dd>
+                {recommendation.from} a {recommendation.to} (
+                {recommendation.windowDays} dias)
+              </dd>
+            </div>
+            <div>
+              <dt className="font-medium">Consumo líquido</dt>
+              <dd>
+                {recommendation.consumption ?? "—"}{" "}
+                {recommendation.consumption !== undefined ? item.unit : ""}
+              </dd>
+            </div>
+            <div>
+              <dt className="font-medium">Média diária</dt>
+              <dd>
+                {recommendation.averageDailyConsumption?.toFixed(3) ?? "—"}{" "}
+                {recommendation.averageDailyConsumption !== undefined
+                  ? `${item.unit}/dia`
+                  : ""}
+              </dd>
+            </div>
+            <div>
+              <dt className="font-medium">Prazo de compra</dt>
+              <dd>
+                {recommendation.purchaseLeadTimeDays ?? "Não configurado"} dias
+              </dd>
+            </div>
+            <div>
+              <dt className="font-medium">Estoque de segurança</dt>
+              <dd>
+                {recommendation.safetyStock ?? "Não configurado"} {item.unit}
+              </dd>
+            </div>
+            <div>
+              <dt className="font-medium">Mínimo sugerido</dt>
+              <dd>
+                {recommendation.suggestedMinimumStock ??
+                  statusReason(recommendation.reason)}
+              </dd>
+            </div>
+          </dl>
+        )}
+        {can(state.user, "inventory.items.configureReplenishment") && (
+          <form
+            className="grid gap-4 border-t pt-4 sm:grid-cols-2 lg:grid-cols-5"
+            onSubmit={(event) => void saveReplenishment(event)}
+          >
+            <Field id="minimum-stock" label="Mínimo efetivo">
+              <Input
+                id="minimum-stock"
+                name="minimumStock"
+                type="number"
+                min="0"
+                defaultValue={item.minimumStock ?? ""}
+              />
+            </Field>
+            <Field id="lead-time" label="Prazo de compra (dias)">
+              <Input
+                id="lead-time"
+                name="purchaseLeadTimeDays"
+                type="number"
+                min="0"
+                defaultValue={item.purchaseLeadTimeDays ?? ""}
+              />
+            </Field>
+            <Field id="safety-stock" label="Estoque de segurança">
+              <Input
+                id="safety-stock"
+                name="safetyStock"
+                type="number"
+                min="0"
+                defaultValue={item.safetyStock ?? ""}
+              />
+            </Field>
+            <Field id="window-days" label="Janela (30–365 dias)">
+              <Input
+                id="window-days"
+                name="recommendationWindowDays"
+                type="number"
+                min="30"
+                max="365"
+                defaultValue={item.recommendationWindowDays}
+                required
+              />
+            </Field>
+            <div className="self-end">
+              <Button type="submit" loading={saving}>
+                Salvar parâmetros
+              </Button>
+            </div>
+          </form>
+        )}
+      </section>
       {canEditItem && (
         <form
           className="grid max-w-3xl gap-4 md:grid-cols-2"
@@ -245,4 +420,24 @@ export default function ItemDetailPage() {
       </section>
     </div>
   );
+}
+
+function situationLabel(
+  situation: ReplenishmentRecommendation["situation"],
+): string {
+  return {
+    INCONSISTENT: "Inconsistente — há variante com saldo negativo",
+    OUT_OF_STOCK: "Sem estoque",
+    NOT_CONFIGURED: "Mínimo não configurado",
+    REPLENISHMENT: "Atingiu o mínimo de reposição",
+    OK: "Dentro do nível configurado",
+  }[situation];
+}
+
+function statusReason(reason: string | null): string {
+  if (reason === "REPLENISHMENT_PARAMETERS_MISSING")
+    return "Parâmetros de prazo/segurança pendentes";
+  if (reason === "HISTORY_DOES_NOT_COVER_WINDOW")
+    return "Histórico insuficiente para o período";
+  return "Não calculável";
 }

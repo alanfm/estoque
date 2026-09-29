@@ -3,6 +3,7 @@
 use Acme\Inventory\Http\Controllers\CatalogController;
 use Acme\Inventory\Http\Controllers\InventoryCorrectionController;
 use Acme\Inventory\Http\Controllers\MovementController;
+use Acme\Inventory\Http\Controllers\ReplenishmentController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->group(function (): void {
@@ -13,6 +14,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/items', [CatalogController::class, 'createItem']);
     Route::get('/items/{item}', [CatalogController::class, 'showItem']);
     Route::patch('/items/{item}', [CatalogController::class, 'updateItem']);
+    Route::get('/items/{item}/replenishment', [ReplenishmentController::class, 'show']);
+    Route::patch('/items/{item}/replenishment', [ReplenishmentController::class, 'configure']);
     Route::post('/items/{item}/variants', [CatalogController::class, 'createVariant']);
     Route::patch('/variants/{variant}', [CatalogController::class, 'updateVariant']);
     Route::get('/movements', [MovementController::class, 'index']);
