@@ -5,7 +5,8 @@
   "version": "1.0.0",
   "require": {
     "php": "~8.5.0",
-    "laravel/framework": "^13.0"
+    "laravel/framework": "^13.0",
+    "phpoffice/phpspreadsheet": "^5.2"
   },
   "autoload": {
     "psr-4": {

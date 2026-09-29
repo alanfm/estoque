@@ -103,3 +103,15 @@ P06 aceita pelo usuário em 29/09/2026. A suíte Inventory e os checks de qualid
 | Verificações | aprovadas localmente | `InventoryReplenishmentTest`: 4 testes/37 assertions; Pint, PHPStan, Prettier, ESLint, TypeScript e Vitest sentinela passam. |
 
 P07 aceita pelo usuário em 29/09/2026, com a limitação da ação de aplicação explícita registrada acima. Nenhum parâmetro efetivo foi configurado e nenhum saldo operacional foi alterado. O cálculo permanece sob demanda, sem scheduler/cache. A ação de aplicar sugestão pode ser tratada em entrega futura.
+
+## P08 — Dashboard, relatórios e exportação
+
+| Item | Estado | Evidência / próxima ação |
+|---|---|---|
+| P08.1 Dashboard | aceito | Endpoint com alertas/contagens, unidade de entradas/saídas no período e `asOf`; página com estado de carregamento/erro e intervalo. |
+| P08.2–P08.3 Relatórios | aceito | Consultas de estoque por variante/unidade, reposição, consumo agrupável (item/categoria/OS/mês) e ajustes/estornos. Consultas compostas leem em transação para snapshot consistente. Estoque informa custo histórico conhecido e linhas/unidades sem custo, sem chamar custo de avaliação do saldo. Datas inclusivas testadas para consumo e ajustes; situação segue a prioridade aprovada. |
+| P08.4–P08.5 Exportações | aceito com verificações operacionais pendentes | CSV neutraliza fórmulas; XLSX grava valores textuais como string; ambos incluem instante/moeda, usam dados/filtros correspondentes e exigem as permissões `reports.view` + `reports.export`. PhpSpreadsheet ^5.2 adicionado ao pacote; extensões GD/ZIP/XML necessárias estão declaradas nos Dockerfiles de produção/bootstrap. Imagem Docker ainda não reconstruída. |
+| P08.6 Interface | aceito com verificações pendentes | Página de relatórios com tipos, filtros, paginação e controles de exportação condicionados à permissão; painel dashboard lazy. Revisão visual/E2E pendentes. |
+| Verificações | aprovadas localmente | `InventoryReportsTest`: 4 testes/48 assertions; suíte Inventory: 17 testes/161 assertions; Vitest: 58 testes. Pint, PHPStan, Prettier, ESLint, TypeScript, build e `composer check-platform-reqs --no-dev` passam; build mantém alerta de chunk >500 kB. Composer validate apenas reporta ausência de licença. `composer require` não reportou advisories de segurança. |
+
+P08 aceita pelo usuário em 29/09/2026. Permanecem explícitas as verificações de reconstrução da imagem Docker, revisão visual/E2E e medição de desempenho. Nenhuma exportação contém payload de auditoria completo ou dados reais importados.

@@ -15,6 +15,16 @@ const module: FrontendModule = {
       permission: "inventory.items.create",
     },
     {
+      path: "admin/inventory/dashboard",
+      load: () => import("./pages/DashboardPage"),
+      permission: "inventory.dashboard.view",
+    },
+    {
+      path: "admin/inventory/reports",
+      load: () => import("./pages/ReportsPage"),
+      permission: "inventory.reports.view",
+    },
+    {
       path: "admin/inventory/categories",
       load: () => import("./pages/CategoriesPage"),
       permission: "inventory.categories.viewAny",
@@ -70,6 +80,20 @@ const module: FrontendModule = {
       icon: "Tags",
       permission: "inventory.categories.viewAny",
       order: 61,
+    },
+    {
+      to: "/admin/inventory/dashboard",
+      label: "Painel",
+      icon: "FileText",
+      permission: "inventory.dashboard.view",
+      order: 60,
+    },
+    {
+      to: "/admin/inventory/reports",
+      label: "Relatórios",
+      icon: "FileText",
+      permission: "inventory.reports.view",
+      order: 64,
     },
     {
       to: "/admin/inventory/movements",
