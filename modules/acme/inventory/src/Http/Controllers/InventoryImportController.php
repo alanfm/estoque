@@ -109,9 +109,11 @@ final class InventoryImportController
             'version' => ['required', 'integer', 'min:1'],
             'rows' => ['required', 'array', 'min:1', 'max:1000'],
             'rows.*.id' => ['required', 'integer', 'exists:inventory_import_rows,id'],
-            'rows.*.itemId' => ['required', 'integer', 'exists:inventory_items,id'],
-            'rows.*.variantId' => ['required', 'integer', 'exists:inventory_product_variants,id'],
-            'rows.*.type' => ['required', 'in:ENTRY,ISSUE'],
+            'rows.*.action' => ['required', 'in:MAPPED,SKIPPED'],
+            'rows.*.reason' => ['nullable', 'string', 'required_if:rows.*.action,SKIPPED', 'max:5000'],
+            'rows.*.itemId' => ['required_if:rows.*.action,MAPPED', 'integer', 'exists:inventory_items,id'],
+            'rows.*.variantId' => ['required_if:rows.*.action,MAPPED', 'integer', 'exists:inventory_product_variants,id'],
+            'rows.*.type' => ['required_if:rows.*.action,MAPPED', 'in:ENTRY,ISSUE'],
         ]);
         DB::transaction(function () use ($batch, $data): void {
             $record = DB::table('inventory_import_batches')->where('id', $batch)->lockForUpdate()->first();
@@ -121,6 +123,18 @@ final class InventoryImportController
                 $row = DB::table('inventory_import_rows')->where('id', $resolution['id'])->where('batch_id', $batch)->first();
                 abort_if($row === null, 422);
                 $source = json_decode($row->source_payload, true, flags: JSON_THROW_ON_ERROR);
+                if ($resolution['action'] === 'SKIPPED') {
+                    $reason = trim((string) ($resolution['reason'] ?? ''));
+                    if ($reason === '') {
+                        throw ValidationException::withMessages(['rows' => 'O descarte da linha exige justificativa.']);
+                    }
+                    DB::table('inventory_import_rows')->where('id', $row->id)->update([
+                        'corrected_payload' => json_encode([...$source, '_skipReason' => $reason], JSON_THROW_ON_ERROR),
+                        'resolution' => 'SKIPPED', 'errors' => null, 'updated_at' => now(),
+                    ]);
+
+                    continue;
+                }
                 $candidate = $row->corrected_payload === null ? $source : json_decode($row->corrected_payload, true, flags: JSON_THROW_ON_ERROR);
                 $itemCode = DB::table('inventory_items')->where('id', $resolution['itemId'])->value('code');
                 abort_unless(is_string($itemCode) && strtoupper(trim((string) ($candidate['code'] ?? ''))) === $itemCode, 422, 'ITEM_CODE_MISMATCH');
@@ -146,6 +160,9 @@ final class InventoryImportController
                 }
                 if (! isset($candidate['cost']) || $candidate['cost'] === '') {
                     $exceptions[] = 'Custo histórico desconhecido';
+                }
+                if (isset($candidate['_source_formulas']['quantity'])) {
+                    $exceptions[] = 'Quantidade obtida do valor calculado armazenado da fórmula; nenhuma fórmula foi executada';
                 }
                 $candidate['legacyExceptions'] = array_values(array_unique($exceptions));
                 if (isset($candidate['original_date'])) {
@@ -218,7 +235,13 @@ final class InventoryImportController
             $locationId = DB::table('inventory_locations')->where('code', 'TI')->value('id');
             abort_if($locationId === null, 409, 'INVENTORY_LOCATION_MISSING');
             $movementIds = [];
+            $skippedRowIds = [];
             foreach ($lines as $row) {
+                if ($row->resolution === 'SKIPPED') {
+                    $skippedRowIds[] = (int) $row->id;
+
+                    continue;
+                }
                 $payload = json_decode($row->corrected_payload, true, flags: JSON_THROW_ON_ERROR);
                 abort_if($row->errors !== null || ! isset($payload['variantId'], $payload['type']), 409, 'IMPORT_NOT_READY');
                 $movementId = DB::table('inventory_movements')->insertGetId([
@@ -251,11 +274,11 @@ final class InventoryImportController
             DB::table('inventory_import_batches')->where('id', $batchId)->update(['status' => 'IMPORTED', 'approved_by' => $actorId, 'completed_at' => now(), 'updated_at' => now()]);
             DB::table('inventory_audit_events')->insert([
                 'entity_type' => 'import_batch', 'entity_id' => $batchId, 'action' => 'committed', 'actor_id' => $actorId,
-                'before' => json_encode(['status' => 'READY']), 'after' => json_encode(['status' => 'IMPORTED', 'movementIds' => $movementIds]),
+                'before' => json_encode(['status' => 'READY']), 'after' => json_encode(['status' => 'IMPORTED', 'movementIds' => $movementIds, 'skippedRowIds' => $skippedRowIds]),
                 'reason' => 'Importação legada aprovada pelo operador', 'occurred_at' => now(),
             ]);
 
-            return ['batchId' => $batchId, 'status' => 'IMPORTED', 'movements' => $movementIds];
+            return ['batchId' => $batchId, 'status' => 'IMPORTED', 'movements' => $movementIds, 'skippedRows' => $skippedRowIds];
         }, 1);
     }
 

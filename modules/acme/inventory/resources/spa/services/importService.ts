@@ -37,9 +37,11 @@ export const importService = {
     version: number,
     rows: Array<{
       id: number;
-      itemId: number;
-      variantId: number;
-      type: "ENTRY" | "ISSUE";
+      action: "MAPPED" | "SKIPPED";
+      reason?: string;
+      itemId?: number;
+      variantId?: number;
+      type?: "ENTRY" | "ISSUE";
     }>,
   ) {
     return apiRequest<{ data: ImportBatch; rows: Paginated<ImportRow> }>(
@@ -60,7 +62,7 @@ export interface ImportRow {
   id: number;
   sheet_name: string;
   row_number: number;
-  source_payload: Record<string, string | number | null>;
-  corrected_payload: Record<string, string | number | null> | null;
+  source_payload: Record<string, unknown>;
+  corrected_payload: Record<string, unknown> | null;
   errors: string[] | null;
 }

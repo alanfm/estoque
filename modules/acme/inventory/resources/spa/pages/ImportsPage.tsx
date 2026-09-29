@@ -26,7 +26,13 @@ export default function ImportsPage() {
   const [mappings, setMappings] = useState<
     Record<
       number,
-      { itemId: string; variantId: string; type: "ENTRY" | "ISSUE" }
+      {
+        itemId: string;
+        variantId: string;
+        type: "ENTRY" | "ISSUE";
+        action: "MAPPED" | "SKIPPED";
+        reason: string;
+      }
     >
   >({});
   const [message, setMessage] = useState("");
@@ -65,6 +71,8 @@ export default function ImportsPage() {
           {
             itemId: String(row.corrected_payload?.itemId ?? ""),
             variantId: String(row.corrected_payload?.variantId ?? ""),
+            action: row.corrected_payload?._skipReason ? "SKIPPED" : "MAPPED",
+            reason: String(row.corrected_payload?._skipReason ?? ""),
             type: (row.corrected_payload?.type === "ISSUE"
               ? "ISSUE"
               : "ENTRY") as "ENTRY" | "ISSUE",
@@ -82,8 +90,17 @@ export default function ImportsPage() {
         batch.analysis_version,
         rows.map((row) => {
           const mapping = mappings[row.id];
+          if (mapping?.action === "SKIPPED") {
+            return {
+              id: row.id,
+              action: "SKIPPED" as const,
+              reason: mapping.reason,
+            };
+          }
+
           return {
             id: row.id,
+            action: "MAPPED" as const,
             itemId: Number(mapping?.itemId),
             variantId: Number(mapping?.variantId),
             type: mapping?.type ?? "ENTRY",
@@ -135,10 +152,10 @@ export default function ImportsPage() {
         ]}
       />
       <p role="note">
-        Use somente um XLSX no formato canônico: cabeçalhos type, code, quantity
-        e date (AAAA-MM-DD); colunas opcionais category, description, origin,
-        document_number, service_order_number e cost. Fórmulas são ignoradas. A
-        estrutura da planilha real ainda precisa ser mapeada.
+        A pasta Controle de Estoque v1.2 é analisada pelas abas DADOS e
+        LANÇAMENTOS. Fórmulas derivadas são ignoradas; para quantidade com
+        fórmula, somente o valor armazenado é oferecido para revisão. Linha sem
+        quantidade precisa ser descartada com justificativa explícita.
       </p>
       {message && <p role="status">{message}</p>}
       {allowed && (
@@ -201,6 +218,7 @@ export default function ImportsPage() {
                   <th>Item ID</th>
                   <th>Variante ID</th>
                   <th>Tipo</th>
+                  <th>Decisão</th>
                   <th>Erros</th>
                 </tr>
               </thead>
@@ -222,11 +240,14 @@ export default function ImportsPage() {
                         aria-label={`Item da linha ${row.row_number}`}
                         inputMode="numeric"
                         value={mappings[row.id]?.itemId ?? ""}
+                        disabled={mappings[row.id]?.action === "SKIPPED"}
                         onChange={(event) =>
                           setMappings((current) => ({
                             ...current,
                             [row.id]: {
                               ...current[row.id],
+                              action: current[row.id]?.action ?? "MAPPED",
+                              reason: current[row.id]?.reason ?? "",
                               itemId: event.target.value,
                               variantId: current[row.id]?.variantId ?? "",
                               type: current[row.id]?.type ?? "ENTRY",
@@ -240,11 +261,14 @@ export default function ImportsPage() {
                         aria-label={`Variante da linha ${row.row_number}`}
                         inputMode="numeric"
                         value={mappings[row.id]?.variantId ?? ""}
+                        disabled={mappings[row.id]?.action === "SKIPPED"}
                         onChange={(event) =>
                           setMappings((current) => ({
                             ...current,
                             [row.id]: {
                               ...current[row.id],
+                              action: current[row.id]?.action ?? "MAPPED",
+                              reason: current[row.id]?.reason ?? "",
                               itemId: current[row.id]?.itemId ?? "",
                               variantId: event.target.value,
                               type: current[row.id]?.type ?? "ENTRY",
@@ -257,11 +281,14 @@ export default function ImportsPage() {
                       <select
                         aria-label={`Tipo da linha ${row.row_number}`}
                         value={mappings[row.id]?.type ?? "ENTRY"}
+                        disabled={mappings[row.id]?.action === "SKIPPED"}
                         onChange={(event) =>
                           setMappings((current) => ({
                             ...current,
                             [row.id]: {
                               ...current[row.id],
+                              action: current[row.id]?.action ?? "MAPPED",
+                              reason: current[row.id]?.reason ?? "",
                               itemId: current[row.id]?.itemId ?? "",
                               variantId: current[row.id]?.variantId ?? "",
                               type: event.target.value as "ENTRY" | "ISSUE",
@@ -272,6 +299,48 @@ export default function ImportsPage() {
                         <option value="ENTRY">Entrada</option>
                         <option value="ISSUE">Saída</option>
                       </select>
+                    </td>
+                    <td>
+                      <select
+                        aria-label={`Decisão da linha ${row.row_number}`}
+                        value={mappings[row.id]?.action ?? "MAPPED"}
+                        onChange={(event) =>
+                          setMappings((current) => ({
+                            ...current,
+                            [row.id]: {
+                              ...current[row.id],
+                              itemId: current[row.id]?.itemId ?? "",
+                              variantId: current[row.id]?.variantId ?? "",
+                              type: current[row.id]?.type ?? "ENTRY",
+                              action: event.target.value as
+                                "MAPPED" | "SKIPPED",
+                              reason: current[row.id]?.reason ?? "",
+                            },
+                          }))
+                        }
+                      >
+                        <option value="MAPPED">Importar</option>
+                        <option value="SKIPPED">Descartar</option>
+                      </select>
+                      {mappings[row.id]?.action === "SKIPPED" && (
+                        <input
+                          aria-label={`Justificativa para descartar linha ${row.row_number}`}
+                          value={mappings[row.id]?.reason ?? ""}
+                          onChange={(event) =>
+                            setMappings((current) => ({
+                              ...current,
+                              [row.id]: {
+                                ...current[row.id],
+                                itemId: current[row.id]?.itemId ?? "",
+                                variantId: current[row.id]?.variantId ?? "",
+                                type: current[row.id]?.type ?? "ENTRY",
+                                action: "SKIPPED",
+                                reason: event.target.value,
+                              },
+                            }))
+                          }
+                        />
+                      )}
                     </td>
                     <td>{row.errors?.join("; ") ?? "—"}</td>
                   </tr>

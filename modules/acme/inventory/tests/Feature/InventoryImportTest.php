@@ -32,6 +32,7 @@ final class InventoryImportTest extends TestCase
         $sheet->fromArray(['type', 'code', 'quantity', 'date', 'description', 'cost', 'service_order_number'], null, 'A1');
         $sheet->fromArray(['ENTRY', 'IMP01', 5, null, 'Synthetic entry', '12.50', null], null, 'A2');
         $sheet->fromArray(['ENTRY', 'IMP01', 3, '2003-05-30', 'Synthetic corrected date', null, '1001'], null, 'A3');
+        $sheet->fromArray(['ISSUE', 'IMP01', null, null, 'Missing quantity', null, '500'], null, 'A4');
         $path = tempnam(sys_get_temp_dir(), 'inventory-import-');
         (new Xlsx($spreadsheet))->save($path);
         $spreadsheet->disconnectWorksheets();
@@ -53,12 +54,13 @@ final class InventoryImportTest extends TestCase
             $this->patchJson('/api/v1/inventory/imports/'.$batch['id'].'/resolutions', [
                 'version' => 1,
                 'rows' => [
-                    ['id' => $rows[0]['id'], 'itemId' => $item, 'variantId' => $variant, 'type' => 'ENTRY'],
-                    ['id' => $rows[1]['id'], 'itemId' => $item, 'variantId' => $variant, 'type' => 'ENTRY'],
+                    ['id' => $rows[0]['id'], 'action' => 'MAPPED', 'itemId' => $item, 'variantId' => $variant, 'type' => 'ENTRY'],
+                    ['id' => $rows[1]['id'], 'action' => 'MAPPED', 'itemId' => $item, 'variantId' => $variant, 'type' => 'ENTRY'],
+                    ['id' => $rows[2]['id'], 'action' => 'SKIPPED', 'reason' => 'Quantidade ausente e não comprovável na fonte'],
                 ],
             ])->assertOk()->assertJsonPath('data.status', 'READY');
             $this->withHeader('Idempotency-Key', 'synthetic-import')->postJson('/api/v1/inventory/imports/'.$batch['id'].'/commit', ['version' => 2])
-                ->assertOk()->assertJsonPath('data.status', 'IMPORTED');
+                ->assertOk()->assertJsonPath('data.status', 'IMPORTED')->assertJsonPath('data.skippedRows.0', $rows[2]['id']);
             self::assertSame(8, (int) DB::table('inventory_balances')->where('variant_id', $variant)->value('quantity'));
             self::assertSame(1, DB::table('inventory_ledger_entries')->where('variant_id', $variant)->whereNull('effective_on')->count());
             self::assertSame('2023-05-30', DB::table('inventory_ledger_entries')->where('variant_id', $variant)->whereNotNull('effective_on')->value('effective_on'));
