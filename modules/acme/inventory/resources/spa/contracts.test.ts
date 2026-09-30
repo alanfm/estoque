@@ -1,7 +1,10 @@
 import {
   ApiError,
+  Table,
   apiDownload,
   apiRequest,
+  can,
+  useAsync,
   type ApiRequestOptions,
   type ApiResource,
 } from "@starterkit/module-kit";
@@ -19,5 +22,8 @@ describe("public module HTTP contract", () => {
     expect(apiRequest).toBeTypeOf("function");
     expect(apiDownload).toBeTypeOf("function");
     expect(ApiError).toBeTypeOf("function");
+    expect(Table).toBeTypeOf("function");
+    expect(useAsync).toBeTypeOf("function");
+    expect(can).toBeTypeOf("function");
   });
 });

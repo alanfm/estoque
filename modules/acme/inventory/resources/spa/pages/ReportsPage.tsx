@@ -1,11 +1,34 @@
+import { FileText } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
-import { Button } from "../../../../../../resources/spa/components/actions/Button";
-import { PageHeader } from "../../../../../../resources/spa/components/navigation/PageHeader";
-import { Pagination } from "../../../../../../resources/spa/components/navigation/Pagination";
-import { useAsync } from "../../../../../../resources/spa/hooks/useAsync";
-import { useSession } from "../../../../../../resources/spa/stores/session/SessionContext";
-import { can } from "../../../../../../resources/spa/lib/permissions";
+import {
+  Alert,
+  Button,
+  EmptyState,
+  ErrorState,
+  Field,
+  Input,
+  PageHeader,
+  Pagination,
+  Select,
+  Spinner,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableWrapper,
+  can,
+  useAsync,
+  useSession,
+} from "@starterkit/module-kit";
+import {
+  labeled,
+  movementTypeLabels,
+  situationLabels,
+  unitLabels,
+} from "../labels";
 import { reportsService, type ReportType } from "../services/reportsService";
 
 const titles: Record<ReportType, string> = {
@@ -13,6 +36,59 @@ const titles: Record<ReportType, string> = {
   replenishment: "Reposição",
   consumption: "Consumo",
   adjustments: "Ajustes e estornos",
+};
+
+const columnLabels: Record<string, string> = {
+  itemId: "Item",
+  code: "Código",
+  item: "Item",
+  category: "Categoria",
+  unit: "Unidade",
+  variantId: "Variante",
+  brand: "Marca",
+  model: "Modelo",
+  variant: "Descrição",
+  variantStock: "Saldo da variante",
+  aggregateStock: "Saldo agregado",
+  minimumStock: "Mínimo",
+  situation: "Situação",
+  knownEntryCostBRL: "Custo conhecido (R$)",
+  unknownCostLines: "Linhas sem custo",
+  unknownCostUnits: "Unidades sem custo",
+  stock: "Saldo",
+  periodFrom: "De",
+  periodTo: "Até",
+  consumption: "Consumo",
+  purchaseLeadTimeDays: "Prazo (dias)",
+  safetyStock: "Segurança",
+  suggestedMinimumStock: "Mínimo sugerido",
+  recommendationStatus: "Recomendação",
+  groupBy: "Agrupamento",
+  groupId: "Grupo",
+  group: "Grupo",
+  grossIssues: "Saídas brutas",
+  reversedIssues: "Estornos",
+  netConsumption: "Consumo líquido",
+  date: "Data",
+  movementId: "Movimento",
+  type: "Tipo",
+  originalMovementId: "Movimento original",
+  delta: "Delta",
+  reason: "Motivo",
+  actorId: "Responsável",
+};
+
+const recommendationLabels: Record<string, string> = {
+  CALCULABLE: "Calculável",
+  NOT_CALCULABLE: "Não calculável",
+  INSUFFICIENT_HISTORY: "Histórico insuficiente",
+};
+
+const groupLabels: Record<string, string> = {
+  item: "Item",
+  category: "Categoria",
+  serviceOrderNumber: "Ordem de serviço",
+  month: "Mês",
 };
 
 export default function ReportsPage() {
@@ -37,6 +113,10 @@ export default function ReportsPage() {
     [type, filters],
   );
   const { data, loading, error, reload } = useAsync(loader);
+  const headers = data?.data[0] ? Object.keys(data.data[0]) : [];
+  const filtered =
+    from !== "" || to !== "" || itemId !== "" || categoryId !== "";
+
   function setFilter(key: string, value: string) {
     const next = new URLSearchParams(params);
     if (value) next.set(key, value);
@@ -44,6 +124,7 @@ export default function ReportsPage() {
     next.delete("page");
     setParams(next, { replace: true });
   }
+
   async function download(format: "csv" | "xlsx") {
     setExporting(true);
     setMessage("");
@@ -59,7 +140,7 @@ export default function ReportsPage() {
       setExporting(false);
     }
   }
-  const headers = data?.data[0] ? Object.keys(data.data[0]) : [];
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -69,12 +150,30 @@ export default function ReportsPage() {
           { label: "Almoxarifado", to: "/admin/inventory" },
           { label: "Relatórios" },
         ]}
+        actions={
+          canExport ? (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="secondary"
+                loading={exporting}
+                onClick={() => void download("csv")}
+              >
+                Exportar CSV
+              </Button>
+              <Button
+                variant="secondary"
+                loading={exporting}
+                onClick={() => void download("xlsx")}
+              >
+                Exportar XLSX
+              </Button>
+            </div>
+          ) : null
+        }
       />
       <div className="flex flex-wrap items-end gap-4">
-        <label className="block">
-          Relatório
-          <select
-            className="mt-1 block rounded border p-2"
+        <Field id="report-type" label="Relatório" className="w-full max-w-xs">
+          <Select
             value={type}
             onChange={(event) => setType(event.target.value as ReportType)}
           >
@@ -83,35 +182,33 @@ export default function ReportsPage() {
                 {label}
               </option>
             ))}
-          </select>
-        </label>
-        {(type === "consumption" || type === "adjustments") && (
+          </Select>
+        </Field>
+        {type === "consumption" || type === "adjustments" ? (
           <>
-            <label>
-              De{" "}
-              <input
+            <Field id="report-from" label="De" className="w-44">
+              <Input
                 type="date"
                 value={from}
                 onChange={(event) => setFilter("from", event.target.value)}
-                className="ml-2 rounded border p-2"
               />
-            </label>
-            <label>
-              Até{" "}
-              <input
+            </Field>
+            <Field id="report-to" label="Até" className="w-44">
+              <Input
                 type="date"
                 value={to}
                 onChange={(event) => setFilter("to", event.target.value)}
-                className="ml-2 rounded border p-2"
               />
-            </label>
+            </Field>
           </>
-        )}
-        {type === "consumption" && (
-          <label className="block">
-            Agrupar por
-            <select
-              className="mt-1 block rounded border p-2"
+        ) : null}
+        {type === "consumption" ? (
+          <Field
+            id="report-group"
+            label="Agrupar por"
+            className="w-full max-w-xs"
+          >
+            <Select
               value={groupBy}
               onChange={(event) => setFilter("groupBy", event.target.value)}
             >
@@ -119,112 +216,110 @@ export default function ReportsPage() {
               <option value="category">Categoria</option>
               <option value="serviceOrderNumber">Ordem de serviço</option>
               <option value="month">Mês</option>
-            </select>
-          </label>
-        )}
-        <label>
-          ID do item
-          <input
+            </Select>
+          </Field>
+        ) : null}
+        <Field id="report-item" label="ID do item" className="w-36">
+          <Input
             type="number"
             min="1"
             value={itemId}
             onChange={(event) => setFilter("itemId", event.target.value)}
-            className="ml-2 rounded border p-2"
           />
-        </label>
-        <label>
-          ID da categoria
-          <input
+        </Field>
+        <Field id="report-category" label="ID da categoria" className="w-40">
+          <Input
             type="number"
             min="1"
             value={categoryId}
             onChange={(event) => setFilter("categoryId", event.target.value)}
-            className="ml-2 rounded border p-2"
           />
-        </label>
-        {canExport && (
-          <>
-            <Button
-              variant="secondary"
-              loading={exporting}
-              onClick={() => void download("csv")}
-            >
-              Exportar CSV
-            </Button>
-            <Button
-              variant="secondary"
-              loading={exporting}
-              onClick={() => void download("xlsx")}
-            >
-              Exportar XLSX
-            </Button>
-          </>
-        )}
+        </Field>
       </div>
-      {type === "stock" && (
-        <p className="text-sm text-slate-600">
+      {type === "stock" ? (
+        <p className="text-body-sm text-ink-secondary">
           Custo histórico conhecido de entradas; não representa avaliação
           financeira do saldo. Quantidades permanecem separadas por unidade.
         </p>
-      )}
-      {message && <p role="alert">{message}</p>}
+      ) : null}
+      {message ? <Alert variant="danger">{message}</Alert> : null}
       {loading && !data ? (
-        <p role="status">Carregando relatório…</p>
+        <div className="flex justify-center p-10">
+          <Spinner label="Carregando relatório" />
+        </div>
       ) : error ? (
-        <p role="alert">
-          Não foi possível carregar o relatório.{" "}
-          <button onClick={reload}>Tentar novamente</button>
-        </p>
-      ) : (
-        <>
-          <p className="text-sm text-slate-600">
-            {data?.meta.total ?? 0} linhas · referência {data?.asOf ?? "—"}
+        <ErrorState requestId={error.requestId} onRetry={reload} />
+      ) : data && data.data.length === 0 ? (
+        <EmptyState
+          icon={FileText}
+          title="Nenhum resultado"
+          description="Nenhum resultado para os filtros selecionados."
+          action={
+            filtered ? (
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  setParams(new URLSearchParams(), { replace: true })
+                }
+              >
+                Limpar filtros
+              </Button>
+            ) : null
+          }
+        />
+      ) : data ? (
+        <div className="space-y-4">
+          <p className="text-body-sm text-ink-secondary">
+            {data.meta.total} linhas · referência {data.asOf || "—"}
           </p>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr>
+          <TableWrapper>
+            <Table>
+              <caption className="sr-only">{titles[type]}</caption>
+              <TableHeader>
+                <TableRow>
                   {headers.map((header) => (
-                    <th className="p-2" key={header}>
-                      {header}
-                    </th>
+                    <TableHead key={header}>
+                      {columnLabels[header] ?? header}
+                    </TableHead>
                   ))}
-                </tr>
-              </thead>
-              <tbody>
-                {data?.data.map((row, index) => (
-                  <tr className="border-t" key={index}>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.data.map((row, index) => (
+                  <TableRow key={index} className="h-auto">
                     {headers.map((header) => (
-                      <td className="p-2" key={header}>
-                        {formatValue(row[header])}
-                      </td>
+                      <TableCell key={header} className="py-3">
+                        {formatCell(header, row[header])}
+                      </TableCell>
                     ))}
-                  </tr>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-            {data?.data.length === 0 && (
-              <p>Nenhum resultado para os filtros selecionados.</p>
-            )}
-          </div>
-          {data && (
-            <Pagination
-              meta={data.meta}
-              onPageChange={(nextPage) => {
-                const next = new URLSearchParams(params);
-                next.set("page", String(nextPage));
-                setParams(next);
-              }}
-            />
-          )}
-        </>
-      )}
+              </TableBody>
+            </Table>
+          </TableWrapper>
+          <Pagination
+            meta={data.meta}
+            onPageChange={(nextPage) => {
+              const next = new URLSearchParams(params);
+              next.set("page", String(nextPage));
+              setParams(next);
+            }}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
 
-function formatValue(value: unknown): string {
+function formatCell(key: string, value: unknown): string {
   if (value === null || value === undefined || value === "") return "—";
-  if (typeof value === "object") return JSON.stringify(value);
-  return String(value);
+  const text =
+    typeof value === "object" ? JSON.stringify(value) : String(value);
+  if (key === "situation") return labeled(situationLabels, text);
+  if (key === "unit") return labeled(unitLabels, text);
+  if (key === "type") return labeled(movementTypeLabels, text);
+  if (key === "recommendationStatus")
+    return labeled(recommendationLabels, text);
+  if (key === "groupBy") return labeled(groupLabels, text);
+  return text;
 }

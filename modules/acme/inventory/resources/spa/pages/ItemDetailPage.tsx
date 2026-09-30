@@ -1,17 +1,34 @@
+import { Boxes, Power } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useParams } from "react-router";
-import { Button } from "../../../../../../resources/spa/components/actions/Button";
-import { Field } from "../../../../../../resources/spa/components/forms/Field";
-import { Input } from "../../../../../../resources/spa/components/forms/Input";
-import { PageHeader } from "../../../../../../resources/spa/components/navigation/PageHeader";
-import { useAsync } from "../../../../../../resources/spa/hooks/useAsync";
+import {
+  Alert,
+  Badge,
+  Button,
+  EmptyState,
+  ErrorState,
+  Field,
+  Input,
+  PageHeader,
+  Select,
+  SimpleTooltip,
+  Spinner,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableWrapper,
+  can,
+  useAsync,
+  useSession,
+} from "@starterkit/module-kit";
 import {
   catalogService,
   type Variant,
   type ReplenishmentRecommendation,
 } from "../services/catalogService";
-import { can } from "../../../../../../resources/spa/lib/permissions";
-import { useSession } from "../../../../../../resources/spa/stores/session/SessionContext";
 
 export default function ItemDetailPage() {
   const { state } = useSession();
@@ -132,14 +149,16 @@ export default function ItemDetailPage() {
       setSaving(false);
     }
   }
-  if (loading && !item) return <p role="status">Carregando item…</p>;
-  if (error || !item)
+  if (loading && !item) {
     return (
-      <p role="alert">
-        Não foi possível carregar o item.{" "}
-        <button onClick={reload}>Tentar novamente</button>
-      </p>
+      <div className="flex justify-center p-10">
+        <Spinner label="Carregando item" />
+      </div>
     );
+  }
+  if (error || !item) {
+    return <ErrorState requestId={error?.requestId} onRetry={reload} />;
+  }
   return (
     <div className="space-y-8">
       <PageHeader
@@ -150,7 +169,7 @@ export default function ItemDetailPage() {
           { label: item.code },
         ]}
       />
-      {message && <p role="alert">{message}</p>}
+      {message ? <Alert variant="danger">{message}</Alert> : null}
       <section
         className="space-y-4 rounded border p-4"
         aria-labelledby="replenishment-title"
@@ -306,11 +325,10 @@ export default function ItemDetailPage() {
             />
           </Field>
           <Field id="edit-category" label="Categoria" required>
-            <select
+            <Select
               id="edit-category"
               name="categoryId"
               defaultValue={item.category?.id}
-              className="w-full rounded border p-2"
             >
               {categories?.data
                 .filter(
@@ -322,19 +340,14 @@ export default function ItemDetailPage() {
                     {category.name}
                   </option>
                 ))}
-            </select>
+            </Select>
           </Field>
           <Field id="edit-unit" label="Unidade">
-            <select
-              id="edit-unit"
-              name="unit"
-              defaultValue={item.unit}
-              className="w-full rounded border p-2"
-            >
+            <Select id="edit-unit" name="unit" defaultValue={item.unit}>
               <option value="UN">Unidade</option>
               <option value="PAR">Par</option>
               <option value="CX">Caixa</option>
-            </select>
+            </Select>
           </Field>
           <label className="flex items-center gap-2">
             <input type="checkbox" name="active" defaultChecked={item.active} />
@@ -357,40 +370,75 @@ export default function ItemDetailPage() {
         </form>
       )}
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold">Variantes de produto</h2>
-        <ul className="space-y-2">
-          {item.variants.map((variant) => (
-            <li
-              key={variant.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded border p-3"
-            >
-              <span>
-                <strong>
-                  {[variant.brand, variant.model].filter(Boolean).join(" ") ||
-                    "Sem marca/modelo"}
-                </strong>{" "}
-                — {variant.description}{" "}
-                <small>
-                  ({variant.active ? "Ativa" : "Inativa"}; saldo:{" "}
-                  {variant.balances?.reduce(
-                    (total, balance) => total + balance.quantity,
-                    0,
-                  ) ?? 0}
-                  )
-                </small>
-              </span>
-              {canUpdateVariant && (
-                <Button
-                  variant="secondary"
-                  onClick={() => void toggleVariant(variant)}
-                >
-                  {variant.active ? "Inativar" : "Reativar"}
-                </Button>
-              )}
-            </li>
-          ))}
-        </ul>
-        {item.variants.length === 0 && <p>Nenhuma variante cadastrada.</p>}
+        <h2 className="text-h3">Variantes de produto</h2>
+        {item.variants.length === 0 ? (
+          <EmptyState
+            icon={Boxes}
+            title="Nenhuma variante"
+            description="Ainda não há variantes cadastradas para este item."
+          />
+        ) : (
+          <TableWrapper>
+            <Table>
+              <caption className="sr-only">
+                Variantes do item {item.code}
+              </caption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Marca / modelo</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Saldo</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {item.variants.map((variant) => (
+                  <TableRow key={variant.id}>
+                    <TableCell className="font-medium">
+                      {[variant.brand, variant.model]
+                        .filter(Boolean)
+                        .join(" ") || "Sem marca/modelo"}
+                    </TableCell>
+                    <TableCell className="text-ink-secondary">
+                      {variant.description}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="neutral">
+                        {variant.active ? "Ativa" : "Inativa"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {variant.balances?.reduce(
+                        (total, balance) => total + balance.quantity,
+                        0,
+                      ) ?? 0}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {canUpdateVariant ? (
+                        <SimpleTooltip
+                          label={variant.active ? "Inativar" : "Reativar"}
+                        >
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="iconCompact"
+                            aria-label={`${variant.active ? "Inativar" : "Reativar"} ${variant.description}`}
+                            onClick={() => void toggleVariant(variant)}
+                          >
+                            <Power className="size-4" aria-hidden="true" />
+                          </Button>
+                        </SimpleTooltip>
+                      ) : (
+                        <span className="text-ink-muted">—</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableWrapper>
+        )}
         {canCreateVariant && (
           <form
             className="grid max-w-3xl gap-4 md:grid-cols-3"

@@ -1,12 +1,28 @@
+import { Pencil, Power, Tags } from "lucide-react";
 import { useCallback, useState } from "react";
-import { Button } from "../../../../../../resources/spa/components/actions/Button";
-import { PageHeader } from "../../../../../../resources/spa/components/navigation/PageHeader";
-import { Field } from "../../../../../../resources/spa/components/forms/Field";
-import { Input } from "../../../../../../resources/spa/components/forms/Input";
-import { useAsync } from "../../../../../../resources/spa/hooks/useAsync";
+import {
+  Alert,
+  Badge,
+  Button,
+  EmptyState,
+  ErrorState,
+  Field,
+  Input,
+  PageHeader,
+  SimpleTooltip,
+  Spinner,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableWrapper,
+  can,
+  useAsync,
+  useSession,
+} from "@starterkit/module-kit";
 import { catalogService, type Category } from "../services/catalogService";
-import { can } from "../../../../../../resources/spa/lib/permissions";
-import { useSession } from "../../../../../../resources/spa/stores/session/SessionContext";
 
 export default function CategoriesPage() {
   const { state } = useSession();
@@ -21,14 +37,17 @@ export default function CategoriesPage() {
   const [editing, setEditing] = useState<Category | null>(null);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setSaving(true);
     setMessage("");
     try {
-      if (editing)
+      if (editing) {
         await catalogService.updateCategory(editing, name, editing.active);
-      else await catalogService.createCategory(name);
+      } else {
+        await catalogService.createCategory(name);
+      }
       setName("");
       setEditing(null);
       reload();
@@ -42,7 +61,9 @@ export default function CategoriesPage() {
       setSaving(false);
     }
   }
+
   async function toggle(category: Category) {
+    setMessage("");
     try {
       await catalogService.updateCategory(
         category,
@@ -58,6 +79,7 @@ export default function CategoriesPage() {
       );
     }
   }
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -68,13 +90,7 @@ export default function CategoriesPage() {
           { label: "Categorias" },
         ]}
       />
-      {message && <p role="alert">{message}</p>}
-      {error && (
-        <p role="alert">
-          Não foi possível carregar as categorias.{" "}
-          <button onClick={reload}>Tentar novamente</button>
-        </p>
-      )}
+      {message ? <Alert variant="danger">{message}</Alert> : null}
       {canCreate || editing ? (
         <form
           className="flex max-w-xl items-end gap-3"
@@ -92,7 +108,7 @@ export default function CategoriesPage() {
           <Button type="submit" loading={saving}>
             {editing ? "Salvar" : "Adicionar"}
           </Button>
-          {editing && (
+          {editing ? (
             <Button
               type="button"
               variant="secondary"
@@ -103,52 +119,84 @@ export default function CategoriesPage() {
             >
               Cancelar
             </Button>
-          )}
+          ) : null}
         </form>
       ) : null}
       {loading && !data ? (
-        <p role="status">Carregando…</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr>
-                <th>Categoria</th>
-                <th>Estado</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data?.data.map((category) => (
-                <tr key={category.id} className="border-t">
-                  <td className="py-3">{category.name}</td>
-                  <td>{category.active ? "Ativa" : "Inativa"}</td>
-                  <td className="space-x-2">
-                    {canUpdate ? (
-                      <>
-                        <button
-                          onClick={() => {
-                            setEditing(category);
-                            setName(category.name);
-                          }}
-                        >
-                          Editar
-                        </button>
-                        <button onClick={() => void toggle(category)}>
-                          {category.active ? "Inativar" : "Reativar"}
-                        </button>
-                      </>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {data?.data.length === 0 && <p>Nenhuma categoria cadastrada.</p>}
+        <div className="flex justify-center p-10">
+          <Spinner label="Carregando categorias" />
         </div>
-      )}
+      ) : error ? (
+        <ErrorState requestId={error.requestId} onRetry={reload} />
+      ) : data && data.data.length === 0 ? (
+        <EmptyState
+          icon={Tags}
+          title="Nenhuma categoria"
+          description="Ainda não há categorias cadastradas."
+        />
+      ) : data ? (
+        <TableWrapper>
+          <Table>
+            <caption className="sr-only">
+              Lista de categorias do almoxarifado
+            </caption>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Categoria</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.data.map((category) => (
+                <TableRow key={category.id}>
+                  <TableCell className="font-medium">{category.name}</TableCell>
+                  <TableCell>
+                    <Badge variant="neutral">
+                      {category.active ? "Ativa" : "Inativa"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {canUpdate ? (
+                      <div className="inline-flex items-center gap-1">
+                        <SimpleTooltip label="Editar">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="iconCompact"
+                            aria-label={`Editar ${category.name}`}
+                            onClick={() => {
+                              setEditing(category);
+                              setName(category.name);
+                            }}
+                          >
+                            <Pencil className="size-4" aria-hidden="true" />
+                          </Button>
+                        </SimpleTooltip>
+                        <SimpleTooltip
+                          label={category.active ? "Inativar" : "Reativar"}
+                        >
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="iconCompact"
+                            aria-label={`${category.active ? "Inativar" : "Reativar"} ${category.name}`}
+                            onClick={() => void toggle(category)}
+                          >
+                            <Power className="size-4" aria-hidden="true" />
+                          </Button>
+                        </SimpleTooltip>
+                      </div>
+                    ) : (
+                      <span className="text-ink-muted">—</span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableWrapper>
+      ) : null}
     </div>
   );
 }

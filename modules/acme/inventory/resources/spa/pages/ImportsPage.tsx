@@ -1,14 +1,49 @@
+import { Eye, FileSpreadsheet } from "lucide-react";
 import { useCallback, useState } from "react";
-import { Button } from "../../../../../../resources/spa/components/actions/Button";
-import { PageHeader } from "../../../../../../resources/spa/components/navigation/PageHeader";
-import { useAsync } from "../../../../../../resources/spa/hooks/useAsync";
-import { can } from "../../../../../../resources/spa/lib/permissions";
-import { useSession } from "../../../../../../resources/spa/stores/session/SessionContext";
+import {
+  Alert,
+  Badge,
+  Button,
+  EmptyState,
+  ErrorState,
+  Field,
+  Input,
+  PageHeader,
+  Pagination,
+  Select,
+  SimpleTooltip,
+  Spinner,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableWrapper,
+  can,
+  useAsync,
+  useSession,
+  type PaginationMeta,
+} from "@starterkit/module-kit";
 import {
   importService,
   type ImportBatch,
   type ImportRow,
 } from "../services/importService";
+
+const batchStatusLabels: Record<string, string> = {
+  NEEDS_REVIEW: "Em revisão",
+  READY: "Pronto",
+  IMPORTED: "Importado",
+};
+
+type Mapping = {
+  itemId: string;
+  variantId: string;
+  type: "ENTRY" | "ISSUE";
+  action: "MAPPED" | "SKIPPED";
+  reason: string;
+};
 
 export default function ImportsPage() {
   const { state } = useSession();
@@ -22,21 +57,18 @@ export default function ImportsPage() {
   const [batch, setBatch] = useState<ImportBatch | null>(null);
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [page, setPage] = useState(1);
-  const [lastPage, setLastPage] = useState(1);
-  const [mappings, setMappings] = useState<
-    Record<
-      number,
-      {
-        itemId: string;
-        variantId: string;
-        type: "ENTRY" | "ISSUE";
-        action: "MAPPED" | "SKIPPED";
-        reason: string;
-      }
-    >
-  >({});
+  const [rowsMeta, setRowsMeta] = useState<PaginationMeta | null>(null);
+  const [mappings, setMappings] = useState<Record<number, Mapping>>({});
   const [message, setMessage] = useState("");
+  const [messageVariant, setMessageVariant] = useState<"success" | "danger">(
+    "danger",
+  );
   const [busy, setBusy] = useState(false);
+
+  function notify(text: string, variant: "success" | "danger" = "danger") {
+    setMessage(text);
+    setMessageVariant(variant);
+  }
 
   async function analyze(event: React.FormEvent) {
     event.preventDefault();
@@ -49,7 +81,7 @@ export default function ImportsPage() {
       await loadBatch(result.id);
       reload();
     } catch (caught) {
-      setMessage(
+      notify(
         caught instanceof Error
           ? caught.message
           : "Falha ao analisar a planilha.",
@@ -58,12 +90,13 @@ export default function ImportsPage() {
       setBusy(false);
     }
   }
+
   async function loadBatch(id: number, selectedPage = 1) {
     const result = await importService.detail(id, selectedPage);
     setBatch(result.data);
     setRows(result.rows.data);
     setPage(result.rows.meta.currentPage);
-    setLastPage(result.rows.meta.lastPage);
+    setRowsMeta(result.rows.meta);
     setMappings(
       Object.fromEntries(
         result.rows.data.map((row) => [
@@ -81,9 +114,25 @@ export default function ImportsPage() {
       ),
     );
   }
+
+  function updateMapping(row: ImportRow, patch: Partial<Mapping>) {
+    setMappings((current) => ({
+      ...current,
+      [row.id]: {
+        itemId: current[row.id]?.itemId ?? "",
+        variantId: current[row.id]?.variantId ?? "",
+        type: current[row.id]?.type ?? "ENTRY",
+        action: current[row.id]?.action ?? "MAPPED",
+        reason: current[row.id]?.reason ?? "",
+        ...patch,
+      },
+    }));
+  }
+
   async function saveResolutions() {
     if (!batch) return;
     setBusy(true);
+    setMessage("");
     try {
       await importService.resolve(
         batch.id,
@@ -109,7 +158,7 @@ export default function ImportsPage() {
       );
       await loadBatch(batch.id, page);
     } catch (caught) {
-      setMessage(
+      notify(
         caught instanceof Error
           ? caught.message
           : "Não foi possível salvar o saneamento.",
@@ -118,22 +167,25 @@ export default function ImportsPage() {
       setBusy(false);
     }
   }
+
   async function commit() {
     if (
       !batch ||
       !window.confirm(
         "Confirmar a importação? Isso cria movimentos e altera os saldos.",
       )
-    )
+    ) {
       return;
+    }
     setBusy(true);
+    setMessage("");
     try {
       await importService.commit(batch);
-      setMessage("Lote importado.");
+      notify("Lote importado.", "success");
       await loadBatch(batch.id);
       reload();
     } catch (caught) {
-      setMessage(
+      notify(
         caught instanceof Error ? caught.message : "Falha ao importar o lote.",
       );
     } finally {
@@ -151,220 +203,220 @@ export default function ImportsPage() {
           { label: "Importação" },
         ]}
       />
-      <p role="note">
+      <p className="max-w-3xl text-body-sm text-ink-secondary">
         A pasta Controle de Estoque v1.2 é analisada pelas abas DADOS e
         LANÇAMENTOS. Fórmulas derivadas são ignoradas; para quantidade com
         fórmula, somente o valor armazenado é oferecido para revisão. Linha sem
         quantidade precisa ser descartada com justificativa explícita.
       </p>
-      {message && <p role="status">{message}</p>}
-      {allowed && (
+      {message ? <Alert variant={messageVariant}>{message}</Alert> : null}
+      {allowed ? (
         <form
-          className="flex items-end gap-3"
+          className="flex max-w-xl items-end gap-3"
           onSubmit={(event) => void analyze(event)}
         >
-          <label className="grid gap-1">
-            Arquivo XLSX
-            <input
+          <Field id="import-file" label="Arquivo XLSX" className="flex-1">
+            <Input
+              className="h-auto py-2 file:mr-3 file:rounded-sm file:border-0 file:bg-subtle file:px-2 file:py-1 file:text-label"
               type="file"
               accept=".xlsx"
               onChange={(event) => setFile(event.target.files?.[0] ?? null)}
             />
-          </label>
+          </Field>
           <Button type="submit" loading={busy} disabled={!file}>
             Enviar e analisar
           </Button>
         </form>
-      )}
-      {error && (
-        <p role="alert">
-          Não foi possível listar lotes.{" "}
-          <button onClick={reload}>Tentar novamente</button>
-        </p>
-      )}
+      ) : null}
       {loading && !data ? (
-        <p role="status">Carregando lotes…</p>
-      ) : (
-        <ul className="space-y-2">
-          {(data?.data ?? []).map((entry) => (
-            <li key={entry.id} className="flex items-center gap-3">
-              <span>
-                #{entry.id} — {entry.original_name} — {entry.status}
-              </span>
-              <Button
-                variant="secondary"
-                onClick={() => void loadBatch(entry.id)}
-              >
-                Abrir prévia
-              </Button>
-            </li>
-          ))}
-        </ul>
-      )}
-      {batch && (
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold">
-            Prévia do lote #{batch.id} · {batch.status}
+        <div className="flex justify-center p-10">
+          <Spinner label="Carregando lotes" />
+        </div>
+      ) : error ? (
+        <ErrorState requestId={error.requestId} onRetry={reload} />
+      ) : data && data.data.length === 0 ? (
+        <EmptyState
+          icon={FileSpreadsheet}
+          title="Nenhum lote"
+          description="Ainda não há lotes de importação."
+        />
+      ) : data ? (
+        <TableWrapper>
+          <Table>
+            <caption className="sr-only">Lotes de importação</caption>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Lote</TableHead>
+                <TableHead>Arquivo</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.data.map((entry) => (
+                <TableRow key={entry.id}>
+                  <TableCell className="font-medium">#{entry.id}</TableCell>
+                  <TableCell className="text-ink-secondary">
+                    {entry.original_name}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="neutral">
+                      {batchStatusLabels[entry.status] ?? entry.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <SimpleTooltip label="Abrir prévia">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="iconCompact"
+                        aria-label={`Abrir prévia do lote ${entry.id}`}
+                        onClick={() => void loadBatch(entry.id)}
+                      >
+                        <Eye className="size-4" aria-hidden="true" />
+                      </Button>
+                    </SimpleTooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableWrapper>
+      ) : null}
+      {batch ? (
+        <section className="space-y-4">
+          <h2 className="text-h3">
+            Prévia do lote #{batch.id} ·{" "}
+            {batchStatusLabels[batch.status] ?? batch.status}
           </h2>
-          <p>
-            Linhas {page} de {lastPage}
-          </p>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr>
-                  <th>Aba / linha</th>
-                  <th>Dados fonte</th>
-                  <th>Item ID</th>
-                  <th>Variante ID</th>
-                  <th>Tipo</th>
-                  <th>Decisão</th>
-                  <th>Erros</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.id}>
-                    <td>
-                      {row.sheet_name} / {row.row_number}
-                    </td>
-                    <td>
-                      <code>
-                        {JSON.stringify(
-                          row.corrected_payload ?? row.source_payload,
-                        )}
-                      </code>
-                    </td>
-                    <td>
-                      <input
-                        aria-label={`Item da linha ${row.row_number}`}
-                        inputMode="numeric"
-                        value={mappings[row.id]?.itemId ?? ""}
-                        disabled={mappings[row.id]?.action === "SKIPPED"}
-                        onChange={(event) =>
-                          setMappings((current) => ({
-                            ...current,
-                            [row.id]: {
-                              ...current[row.id],
-                              action: current[row.id]?.action ?? "MAPPED",
-                              reason: current[row.id]?.reason ?? "",
-                              itemId: event.target.value,
-                              variantId: current[row.id]?.variantId ?? "",
-                              type: current[row.id]?.type ?? "ENTRY",
-                            },
-                          }))
-                        }
-                      />
-                    </td>
-                    <td>
-                      <input
-                        aria-label={`Variante da linha ${row.row_number}`}
-                        inputMode="numeric"
-                        value={mappings[row.id]?.variantId ?? ""}
-                        disabled={mappings[row.id]?.action === "SKIPPED"}
-                        onChange={(event) =>
-                          setMappings((current) => ({
-                            ...current,
-                            [row.id]: {
-                              ...current[row.id],
-                              action: current[row.id]?.action ?? "MAPPED",
-                              reason: current[row.id]?.reason ?? "",
-                              itemId: current[row.id]?.itemId ?? "",
-                              variantId: event.target.value,
-                              type: current[row.id]?.type ?? "ENTRY",
-                            },
-                          }))
-                        }
-                      />
-                    </td>
-                    <td>
-                      <select
-                        aria-label={`Tipo da linha ${row.row_number}`}
-                        value={mappings[row.id]?.type ?? "ENTRY"}
-                        disabled={mappings[row.id]?.action === "SKIPPED"}
-                        onChange={(event) =>
-                          setMappings((current) => ({
-                            ...current,
-                            [row.id]: {
-                              ...current[row.id],
-                              action: current[row.id]?.action ?? "MAPPED",
-                              reason: current[row.id]?.reason ?? "",
-                              itemId: current[row.id]?.itemId ?? "",
-                              variantId: current[row.id]?.variantId ?? "",
-                              type: event.target.value as "ENTRY" | "ISSUE",
-                            },
-                          }))
-                        }
-                      >
-                        <option value="ENTRY">Entrada</option>
-                        <option value="ISSUE">Saída</option>
-                      </select>
-                    </td>
-                    <td>
-                      <select
-                        aria-label={`Decisão da linha ${row.row_number}`}
-                        value={mappings[row.id]?.action ?? "MAPPED"}
-                        onChange={(event) =>
-                          setMappings((current) => ({
-                            ...current,
-                            [row.id]: {
-                              ...current[row.id],
-                              itemId: current[row.id]?.itemId ?? "",
-                              variantId: current[row.id]?.variantId ?? "",
-                              type: current[row.id]?.type ?? "ENTRY",
-                              action: event.target.value as
-                                "MAPPED" | "SKIPPED",
-                              reason: current[row.id]?.reason ?? "",
-                            },
-                          }))
-                        }
-                      >
-                        <option value="MAPPED">Importar</option>
-                        <option value="SKIPPED">Descartar</option>
-                      </select>
-                      {mappings[row.id]?.action === "SKIPPED" && (
-                        <input
-                          aria-label={`Justificativa para descartar linha ${row.row_number}`}
-                          value={mappings[row.id]?.reason ?? ""}
-                          onChange={(event) =>
-                            setMappings((current) => ({
-                              ...current,
-                              [row.id]: {
-                                ...current[row.id],
-                                itemId: current[row.id]?.itemId ?? "",
-                                variantId: current[row.id]?.variantId ?? "",
-                                type: current[row.id]?.type ?? "ENTRY",
-                                action: "SKIPPED",
-                                reason: event.target.value,
-                              },
-                            }))
-                          }
-                        />
-                      )}
-                    </td>
-                    <td>{row.errors?.join("; ") ?? "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              disabled={page <= 1}
-              onClick={() => void loadBatch(batch.id, page - 1)}
-            >
-              Anterior
-            </Button>
-            <Button
-              variant="secondary"
-              disabled={page >= lastPage}
-              onClick={() => void loadBatch(batch.id, page + 1)}
-            >
-              Próxima
-            </Button>
-          </div>
-          {allowed && batch.status !== "IMPORTED" && (
+          {rows.length === 0 ? (
+            <EmptyState
+              icon={FileSpreadsheet}
+              title="Nenhuma linha"
+              description="Não há linhas nesta prévia."
+            />
+          ) : (
+            <TableWrapper>
+              <Table>
+                <caption className="sr-only">
+                  Prévia das linhas do lote #{batch.id}
+                </caption>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Aba / linha</TableHead>
+                    <TableHead>Dados fonte</TableHead>
+                    <TableHead>Item</TableHead>
+                    <TableHead>Variante</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Decisão</TableHead>
+                    <TableHead>Erros</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((row) => {
+                    const mapping = mappings[row.id];
+                    const skipped = mapping?.action === "SKIPPED";
+
+                    return (
+                      <TableRow key={row.id} className="h-auto">
+                        <TableCell className="whitespace-nowrap py-3 font-medium">
+                          {row.sheet_name} / {row.row_number}
+                        </TableCell>
+                        <TableCell className="py-3 text-ink-secondary">
+                          <code className="block max-w-md min-w-64 font-mono text-caption break-words whitespace-pre-wrap">
+                            {JSON.stringify(
+                              row.corrected_payload ?? row.source_payload,
+                            )}
+                          </code>
+                        </TableCell>
+                        <TableCell className="py-3">
+                          <Input
+                            className="min-w-24"
+                            aria-label={`Item da linha ${row.row_number}`}
+                            inputMode="numeric"
+                            value={mapping?.itemId ?? ""}
+                            disabled={skipped}
+                            onChange={(event) =>
+                              updateMapping(row, { itemId: event.target.value })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="py-3">
+                          <Input
+                            className="min-w-24"
+                            aria-label={`Variante da linha ${row.row_number}`}
+                            inputMode="numeric"
+                            value={mapping?.variantId ?? ""}
+                            disabled={skipped}
+                            onChange={(event) =>
+                              updateMapping(row, {
+                                variantId: event.target.value,
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="py-3">
+                          <Select
+                            className="min-w-32"
+                            aria-label={`Tipo da linha ${row.row_number}`}
+                            value={mapping?.type ?? "ENTRY"}
+                            disabled={skipped}
+                            onChange={(event) =>
+                              updateMapping(row, {
+                                type: event.target.value as "ENTRY" | "ISSUE",
+                              })
+                            }
+                          >
+                            <option value="ENTRY">Entrada</option>
+                            <option value="ISSUE">Saída</option>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="py-3">
+                          <Select
+                            className="min-w-36"
+                            aria-label={`Decisão da linha ${row.row_number}`}
+                            value={mapping?.action ?? "MAPPED"}
+                            onChange={(event) =>
+                              updateMapping(row, {
+                                action: event.target.value as
+                                  "MAPPED" | "SKIPPED",
+                              })
+                            }
+                          >
+                            <option value="MAPPED">Importar</option>
+                            <option value="SKIPPED">Descartar</option>
+                          </Select>
+                          {skipped ? (
+                            <Input
+                              className="mt-2 min-w-48"
+                              aria-label={`Justificativa para descartar linha ${row.row_number}`}
+                              value={mapping?.reason ?? ""}
+                              onChange={(event) =>
+                                updateMapping(row, {
+                                  action: "SKIPPED",
+                                  reason: event.target.value,
+                                })
+                              }
+                            />
+                          ) : null}
+                        </TableCell>
+                        <TableCell className="py-3 text-ink-secondary">
+                          {row.errors?.join("; ") || "—"}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableWrapper>
+          )}
+          {rowsMeta ? (
+            <Pagination
+              meta={rowsMeta}
+              onPageChange={(nextPage) => void loadBatch(batch.id, nextPage)}
+            />
+          ) : null}
+          {allowed && batch.status !== "IMPORTED" ? (
             <Button
               variant="secondary"
               loading={busy}
@@ -372,14 +424,14 @@ export default function ImportsPage() {
             >
               Salvar mapeamento desta página
             </Button>
-          )}
-          {allowed && batch.status === "READY" && (
+          ) : null}
+          {allowed && batch.status === "READY" ? (
             <Button loading={busy} onClick={() => void commit()}>
               Confirmar importação
             </Button>
-          )}
+          ) : null}
         </section>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -1,15 +1,30 @@
+import { List } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Link, useParams } from "react-router";
-import { Button } from "../../../../../../resources/spa/components/actions/Button";
-import { PageHeader } from "../../../../../../resources/spa/components/navigation/PageHeader";
-import { useAsync } from "../../../../../../resources/spa/hooks/useAsync";
-import { useSession } from "@starterkit/module-kit";
+import {
+  Alert,
+  Button,
+  EmptyState,
+  ErrorState,
+  PageHeader,
+  Spinner,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableWrapper,
+  can,
+  useAsync,
+  useSession,
+} from "@starterkit/module-kit";
+import { labeled, unitLabels } from "../labels";
 import { movementService } from "../services/movementService";
 
 export default function MovementDetailPage() {
   const { state } = useSession();
-  const canReverse =
-    state.user?.permissions.includes("inventory.movements.reverse") ?? false;
+  const canReverse = can(state.user, "inventory.movements.reverse");
   const { id = "" } = useParams();
   const loader = useCallback(
     (signal: AbortSignal) => movementService.get(id, signal),
@@ -55,15 +70,16 @@ export default function MovementDetailPage() {
       setBusy(false);
     }
   }
-  if (loading && !movement)
-    return <p role="status">Carregando movimentação…</p>;
-  if (error || !movement)
+  if (loading && !movement) {
     return (
-      <p role="alert">
-        Não foi possível carregar o movimento.{" "}
-        <button onClick={reload}>Tentar novamente</button>
-      </p>
+      <div className="flex justify-center p-10">
+        <Spinner label="Carregando movimentação" />
+      </div>
     );
+  }
+  if (error || !movement) {
+    return <ErrorState requestId={error?.requestId} onRetry={reload} />;
+  }
   return (
     <div className="space-y-6">
       <PageHeader
@@ -73,7 +89,7 @@ export default function MovementDetailPage() {
           { label: `#${movement.id}` },
         ]}
       />
-      {message && <p role="alert">{message}</p>}
+      {message ? <Alert variant="danger">{message}</Alert> : null}
       <dl className="grid max-w-2xl grid-cols-2 gap-3">
         <dt>Estado</dt>
         <dd>{movement.status}</dd>
@@ -88,31 +104,56 @@ export default function MovementDetailPage() {
         <dt>Observações</dt>
         <dd>{movement.observations || "—"}</dd>
       </dl>
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold">Linhas</h2>
+      <section className="space-y-4">
+        <h2 className="text-h3">Linhas</h2>
         {movement.lines.length === 0 ? (
-          <p>Rascunho sem linhas.</p>
+          <EmptyState
+            icon={List}
+            title="Rascunho sem linhas"
+            description="Este movimento ainda não tem itens."
+          />
         ) : (
-          <ul className="space-y-2">
-            {movement.lines.map((line) => (
-              <li key={line.id} className="rounded border p-3">
-                {line.snapshot.code} — {line.snapshot.itemName}:{" "}
-                {line.quantity ?? `contagem ${line.counted_quantity ?? 0}`}{" "}
-                {line.snapshot.unit}{" "}
-                <small>
-                  (
-                  {[
-                    line.snapshot.brand,
-                    line.snapshot.model,
-                    line.snapshot.description,
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  )
-                </small>
-              </li>
-            ))}
-          </ul>
+          <TableWrapper>
+            <Table>
+              <caption className="sr-only">
+                Linhas do movimento #{movement.id}
+              </caption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Código</TableHead>
+                  <TableHead>Item</TableHead>
+                  <TableHead>Variante</TableHead>
+                  <TableHead>Quantidade</TableHead>
+                  <TableHead>Unidade</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {movement.lines.map((line) => (
+                  <TableRow key={line.id}>
+                    <TableCell className="font-medium">
+                      {line.snapshot.code || "—"}
+                    </TableCell>
+                    <TableCell>{line.snapshot.itemName || "—"}</TableCell>
+                    <TableCell className="text-ink-secondary">
+                      {[
+                        line.snapshot.brand,
+                        line.snapshot.model,
+                        line.snapshot.description,
+                      ]
+                        .filter(Boolean)
+                        .join(" ") || "—"}
+                    </TableCell>
+                    <TableCell>
+                      {line.quantity ?? line.counted_quantity ?? 0}
+                    </TableCell>
+                    <TableCell>
+                      {labeled(unitLabels, line.snapshot.unit ?? "")}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableWrapper>
         )}
       </section>
       {movement.status === "DRAFT" && (
