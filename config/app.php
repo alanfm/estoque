@@ -11,5 +11,6 @@ return [
     'faker_locale' => 'pt_BR',
     'key' => env('APP_KEY'),
     'cipher' => 'AES-256-CBC',
+    'e2e_role_actors' => (bool) env('E2E_ROLE_ACTORS', false),
     'maintenance' => ['driver' => 'file'],
 ];

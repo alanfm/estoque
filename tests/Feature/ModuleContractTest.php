@@ -9,6 +9,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Starterkit\ContractSample\ContractSampleServiceProvider;
@@ -42,6 +43,9 @@ class ModuleContractTest extends TestCase
         }
 
         $this->clearModuleEnvironment();
+        // This suite runs migrate:fresh with temporary module roots. Make later
+        // RefreshDatabase suites rebuild the schema using the normal registry.
+        RefreshDatabaseState::$migrated = false;
         parent::tearDown();
     }
 

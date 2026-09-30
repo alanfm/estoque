@@ -38,7 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
-        $exceptions->context(fn (): array => request()->is('api/*')
+        $exceptions->context(fn (Throwable $exception, array $context): array => request()->is('api/*')
             ? ['requestId' => request()->attributes->get('requestId')]
             : []);
         $exceptions->render(fn (Throwable $exception, Request $request) => $request->is('api/*')

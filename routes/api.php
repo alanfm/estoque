@@ -1,6 +1,7 @@
 <?php
 
 use App\Core\Auth\Http\Controllers\ChangePasswordController;
+use App\Core\Auth\Http\Controllers\E2eRoleLoginController;
 use App\Core\Auth\Http\Controllers\ForgotPasswordController;
 use App\Core\Auth\Http\Controllers\LoginController;
 use App\Core\Auth\Http\Controllers\LogoutController;
@@ -33,6 +34,10 @@ Route::middleware('web')->prefix('auth')->name('auth.')->group(function (): void
         Route::put('/password', ChangePasswordController::class)->middleware('throttle:auth-ip')->name('password');
     });
 });
+
+if (app()->environment('testing') || (app()->environment('local') && config('app.e2e_role_actors'))) {
+    Route::middleware(['web', 'auth:sanctum'])->post('/e2e/role-login/{role}', E2eRoleLoginController::class);
+}
 
 Route::middleware(['web', 'auth:sanctum'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::get('/users', ListUsersController::class)->name('users.index');
