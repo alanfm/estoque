@@ -12,6 +12,9 @@ use Throwable;
 
 final class InventoryImportController
 {
+    /** @var list<string> */
+    private const LEGACY_ZERO_BALANCE_CODES = ['PEN02', 'SSD01', 'HDN02', 'TN003'];
+
     public function index(Request $request)
     {
         $this->authorize($request, 'inventory.imports.view');
@@ -85,7 +88,12 @@ final class InventoryImportController
                     $payload['date'] = '2023-05-30';
                     $resolution = 'DATE_CORRECTED';
                 }
-                $errors = $this->validateCanonicalRow($payload);
+                $skipReason = $this->initialSkipReason($payload);
+                if ($skipReason !== null) {
+                    $payload['_skipReason'] = $skipReason;
+                    $resolution = 'SKIPPED';
+                }
+                $errors = $skipReason === null ? $this->validateCanonicalRow($payload) : [];
                 DB::table('inventory_import_rows')->insert([
                     'batch_id' => $batchId, 'sheet_name' => $record['sheet'], 'row_number' => $record['row'],
                     'source_payload' => json_encode($record['values'], JSON_THROW_ON_ERROR),
@@ -123,19 +131,24 @@ final class InventoryImportController
                 $row = DB::table('inventory_import_rows')->where('id', $resolution['id'])->where('batch_id', $batch)->first();
                 abort_if($row === null, 422);
                 $source = json_decode($row->source_payload, true, flags: JSON_THROW_ON_ERROR);
+                $existingPayload = $row->corrected_payload === null ? $source : json_decode($row->corrected_payload, true, flags: JSON_THROW_ON_ERROR);
                 if ($resolution['action'] === 'SKIPPED') {
                     $reason = trim((string) ($resolution['reason'] ?? ''));
                     if ($reason === '') {
                         throw ValidationException::withMessages(['rows' => 'O descarte da linha exige justificativa.']);
                     }
                     DB::table('inventory_import_rows')->where('id', $row->id)->update([
-                        'corrected_payload' => json_encode([...$source, '_skipReason' => $reason], JSON_THROW_ON_ERROR),
+                        'corrected_payload' => json_encode([...$existingPayload, '_skipReason' => $reason], JSON_THROW_ON_ERROR),
                         'resolution' => 'SKIPPED', 'errors' => null, 'updated_at' => now(),
                     ]);
 
                     continue;
                 }
-                $candidate = $row->corrected_payload === null ? $source : json_decode($row->corrected_payload, true, flags: JSON_THROW_ON_ERROR);
+                $candidate = $existingPayload;
+                $skipReason = $this->initialSkipReason($candidate);
+                if ($skipReason !== null) {
+                    throw ValidationException::withMessages(['rows' => $skipReason.' A linha deve permanecer fora da carga para inserção manual.']);
+                }
                 $itemCode = DB::table('inventory_items')->where('id', $resolution['itemId'])->value('code');
                 abort_unless(is_string($itemCode) && strtoupper(trim((string) ($candidate['code'] ?? ''))) === $itemCode, 422, 'ITEM_CODE_MISMATCH');
                 abort_unless((int) DB::table('inventory_product_variants')->where('id', $resolution['variantId'])->value('item_id') === (int) $resolution['itemId'], 422, 'VARIANT_ITEM_MISMATCH');
@@ -225,6 +238,26 @@ final class InventoryImportController
         return $errors;
     }
 
+    /** @param array<string, mixed> $source */
+    private function initialSkipReason(array $source): ?string
+    {
+        $code = strtoupper(trim((string) ($source['code'] ?? '')));
+        if (in_array($code, self::LEGACY_ZERO_BALANCE_CODES, true)) {
+            return 'Saldo legado do código '.$code.' foi definido como zero operacional.';
+        }
+        if (isset($source['_source_formulas']['quantity'])) {
+            return 'Quantidade depende de fórmula/cache e será inserida manualmente.';
+        }
+        if ($code === '' || ! is_numeric($source['quantity'] ?? null) || (int) $source['quantity'] < 1 || (string) (int) $source['quantity'] !== (string) $source['quantity']) {
+            return 'Tupla incompleta: código e quantidade inteira positiva são obrigatórios.';
+        }
+        if (! is_string($source['date'] ?? null) || $source['date'] === '') {
+            return 'Tupla incompleta: data do fato ausente; inserir manualmente.';
+        }
+
+        return null;
+    }
+
     private function commitBatch(int $batchId, int $actorId, int $version): array
     {
         return DB::transaction(function () use ($batchId, $actorId, $version): array {
@@ -244,6 +277,7 @@ final class InventoryImportController
                 }
                 $payload = json_decode($row->corrected_payload, true, flags: JSON_THROW_ON_ERROR);
                 abort_if($row->errors !== null || ! isset($payload['variantId'], $payload['type']), 409, 'IMPORT_NOT_READY');
+                abort_if($this->initialSkipReason($payload) !== null, 409, 'INCOMPLETE_IMPORT_ROW');
                 $movementId = DB::table('inventory_movements')->insertGetId([
                     'type' => $payload['type'], 'status' => 'POSTED', 'location_id' => $locationId,
                     'occurred_on' => $payload['date'] ?: null, 'origin' => $payload['origin'] ?? 'OTHER',

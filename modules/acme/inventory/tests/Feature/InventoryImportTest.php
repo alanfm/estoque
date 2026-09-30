@@ -17,7 +17,7 @@ final class InventoryImportTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_synthetic_workbook_is_analyzed_mapped_and_committed_atomically_with_nullable_legacy_date(): void
+    public function test_only_complete_tuples_are_committed_and_incomplete_rows_stay_manual(): void
     {
         $this->artisan('core:sync-permissions')->assertSuccessful();
         $this->artisan('inventory:install')->assertSuccessful();
@@ -33,6 +33,7 @@ final class InventoryImportTest extends TestCase
         $sheet->fromArray(['ENTRY', 'IMP01', 5, null, 'Synthetic entry', '12.50', null], null, 'A2');
         $sheet->fromArray(['ENTRY', 'IMP01', 3, '2003-05-30', 'Synthetic corrected date', null, '1001'], null, 'A3');
         $sheet->fromArray(['ISSUE', 'IMP01', null, null, 'Missing quantity', null, '500'], null, 'A4');
+        $sheet->fromArray(['ENTRY', 'PEN02', 1, '2026-09-01', 'Legacy negative code', null, null], null, 'A5');
         $path = tempnam(sys_get_temp_dir(), 'inventory-import-');
         (new Xlsx($spreadsheet))->save($path);
         $spreadsheet->disconnectWorksheets();
@@ -47,26 +48,27 @@ final class InventoryImportTest extends TestCase
             self::assertTrue(Storage::disk('inventory-imports')->exists($batch['storage_path']));
             $rows = $this->getJson('/api/v1/inventory/imports/'.$batch['id'])->assertOk()->json('rows.data');
             self::assertNull($rows[0]['source_payload']['date']);
+            self::assertSame('SKIPPED', $rows[0]['resolution']);
             self::assertSame('2003-05-30', $rows[1]['source_payload']['date']);
             self::assertSame('2023-05-30', $rows[1]['corrected_payload']['date']);
             self::assertSame('2003-05-30', $rows[1]['corrected_payload']['original_date']);
+            self::assertSame('SKIPPED', $rows[3]['resolution']);
 
             $this->patchJson('/api/v1/inventory/imports/'.$batch['id'].'/resolutions', [
                 'version' => 1,
                 'rows' => [
-                    ['id' => $rows[0]['id'], 'action' => 'MAPPED', 'itemId' => $item, 'variantId' => $variant, 'type' => 'ENTRY'],
                     ['id' => $rows[1]['id'], 'action' => 'MAPPED', 'itemId' => $item, 'variantId' => $variant, 'type' => 'ENTRY'],
-                    ['id' => $rows[2]['id'], 'action' => 'SKIPPED', 'reason' => 'Quantidade ausente e não comprovável na fonte'],
                 ],
             ])->assertOk()->assertJsonPath('data.status', 'READY');
-            $this->withHeader('Idempotency-Key', 'synthetic-import')->postJson('/api/v1/inventory/imports/'.$batch['id'].'/commit', ['version' => 2])
-                ->assertOk()->assertJsonPath('data.status', 'IMPORTED')->assertJsonPath('data.skippedRows.0', $rows[2]['id']);
-            self::assertSame(8, (int) DB::table('inventory_balances')->where('variant_id', $variant)->value('quantity'));
-            self::assertSame(1, DB::table('inventory_ledger_entries')->where('variant_id', $variant)->whereNull('effective_on')->count());
+            $commit = $this->withHeader('Idempotency-Key', 'synthetic-import')->postJson('/api/v1/inventory/imports/'.$batch['id'].'/commit', ['version' => 2])
+                ->assertOk()->assertJsonPath('data.status', 'IMPORTED');
+            self::assertEqualsCanonicalizing([$rows[0]['id'], $rows[2]['id'], $rows[3]['id']], $commit->json('data.skippedRows'));
+            self::assertSame(3, (int) DB::table('inventory_balances')->where('variant_id', $variant)->value('quantity'));
+            self::assertSame(0, DB::table('inventory_ledger_entries')->where('variant_id', $variant)->whereNull('effective_on')->count());
             self::assertSame('2023-05-30', DB::table('inventory_ledger_entries')->where('variant_id', $variant)->whereNotNull('effective_on')->value('effective_on'));
-            self::assertSame('12.50', DB::table('inventory_movement_lines')->where('variant_id', $variant)->value('unit_cost'));
+            self::assertNull(DB::table('inventory_movement_lines')->where('variant_id', $variant)->value('unit_cost'));
             $this->withHeader('Idempotency-Key', 'synthetic-import')->postJson('/api/v1/inventory/imports/'.$batch['id'].'/commit', ['version' => 2])->assertOk();
-            self::assertSame(2, DB::table('inventory_ledger_entries')->where('variant_id', $variant)->count());
+            self::assertSame(1, DB::table('inventory_ledger_entries')->where('variant_id', $variant)->count());
         } finally {
             @unlink($path);
             if ($storedPath !== null) {

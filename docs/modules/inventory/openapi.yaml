@@ -1,0 +1,95 @@
+openapi: 3.0.3
+info:
+  title: Inventory API
+  version: 1.0.0
+  description: API do módulo de Almoxarifado de TI.
+servers:
+  - url: /api/v1/inventory
+security:
+  - cookieAuth: []
+paths:
+  /dashboard:
+    get: { tags: [reports], operationId: getDashboard, responses: { '200': { $ref: '#/components/responses/Json' } } }
+  /categories:
+    get: { tags: [catalog], operationId: listCategories, responses: { '200': { $ref: '#/components/responses/Json' } } }
+    post: { tags: [catalog], operationId: createCategory, requestBody: { $ref: '#/components/requestBodies/Json' }, responses: { '201': { $ref: '#/components/responses/Json' } } }
+  /categories/{category}:
+    parameters: [{ $ref: '#/components/parameters/CategoryId' }]
+    patch: { tags: [catalog], operationId: updateCategory, requestBody: { $ref: '#/components/requestBodies/VersionedJson' }, responses: { '200': { $ref: '#/components/responses/Json' }, '409': { $ref: '#/components/responses/Conflict' } } }
+  /items:
+    get: { tags: [catalog], operationId: listItems, parameters: [{ $ref: '#/components/parameters/PerPage' }], responses: { '200': { $ref: '#/components/responses/Json' } } }
+    post: { tags: [catalog], operationId: createItem, requestBody: { $ref: '#/components/requestBodies/Json' }, responses: { '201': { $ref: '#/components/responses/Json' } } }
+  /items/{item}:
+    parameters: [{ $ref: '#/components/parameters/ItemId' }]
+    get: { tags: [catalog], operationId: showItem, responses: { '200': { $ref: '#/components/responses/Json' } } }
+    patch: { tags: [catalog], operationId: updateItem, requestBody: { $ref: '#/components/requestBodies/VersionedJson' }, responses: { '200': { $ref: '#/components/responses/Json' }, '409': { $ref: '#/components/responses/Conflict' } } }
+  /items/{item}/variants:
+    parameters: [{ $ref: '#/components/parameters/ItemId' }]
+    post: { tags: [catalog], operationId: createVariant, requestBody: { $ref: '#/components/requestBodies/Json' }, responses: { '201': { $ref: '#/components/responses/Json' } } }
+  /variants/{variant}:
+    parameters: [{ $ref: '#/components/parameters/VariantId' }]
+    patch: { tags: [catalog], operationId: updateVariant, requestBody: { $ref: '#/components/requestBodies/VersionedJson' }, responses: { '200': { $ref: '#/components/responses/Json' } } }
+  /items/{item}/replenishment:
+    parameters: [{ $ref: '#/components/parameters/ItemId' }]
+    get: { tags: [catalog], operationId: getReplenishment, responses: { '200': { $ref: '#/components/responses/Json' } } }
+    patch: { tags: [catalog], operationId: configureReplenishment, requestBody: { $ref: '#/components/requestBodies/VersionedJson' }, responses: { '200': { $ref: '#/components/responses/Json' }, '409': { $ref: '#/components/responses/Conflict' } } }
+  /movements:
+    get: { tags: [movements], operationId: listMovements, parameters: [{ $ref: '#/components/parameters/PerPage' }], responses: { '200': { $ref: '#/components/responses/Json' } } }
+    post: { tags: [movements], operationId: createMovementDraft, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/Json' }, responses: { '201': { $ref: '#/components/responses/Json' }, '422': { $ref: '#/components/responses/Validation' } } }
+  /movements/{movement}:
+    parameters: [{ $ref: '#/components/parameters/MovementId' }]
+    get: { tags: [movements], operationId: showMovement, responses: { '200': { $ref: '#/components/responses/Json' } } }
+    patch: { tags: [movements], operationId: updateMovementDraft, requestBody: { $ref: '#/components/requestBodies/VersionedJson' }, responses: { '200': { $ref: '#/components/responses/Json' }, '409': { $ref: '#/components/responses/Conflict' } } }
+  /movements/{movement}/cancel:
+    parameters: [{ $ref: '#/components/parameters/MovementId' }]
+    post: { tags: [movements], operationId: cancelMovementDraft, responses: { '200': { $ref: '#/components/responses/Json' }, '409': { $ref: '#/components/responses/Conflict' } } }
+  /adjustments:
+    post: { tags: [movements], operationId: adjustInventory, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/Json' }, responses: { '201': { $ref: '#/components/responses/Json' }, '409': { $ref: '#/components/responses/Conflict' } } }
+  /movements/{movement}/reverse:
+    parameters: [{ $ref: '#/components/parameters/BatchId' }]
+    post: { tags: [movements], operationId: reverseMovement, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/Json' }, responses: { '201': { $ref: '#/components/responses/Json' }, '409': { $ref: '#/components/responses/Conflict' } } }
+  /reports/{type}:
+    parameters: [{ name: type, in: path, required: true, schema: { type: string, enum: [stock, replenishment, consumption, adjustments] } }]
+    get: { tags: [reports], operationId: getReport, responses: { '200': { $ref: '#/components/responses/Json' }, '422': { $ref: '#/components/responses/Validation' } } }
+  /exports/{type}:
+    parameters: [{ name: type, in: path, required: true, schema: { type: string, enum: [stock, replenishment, consumption, adjustments] } }]
+    get: { tags: [reports], operationId: exportReport, parameters: [{ name: format, in: query, required: true, schema: { type: string, enum: [csv, xlsx] } }], responses: { '200': { description: Download CSV/XLSX }, '403': { $ref: '#/components/responses/Forbidden' } } }
+  /imports:
+    get: { tags: [imports], operationId: listImports, responses: { '200': { $ref: '#/components/responses/Json' } } }
+  /imports/analyze:
+    post: { tags: [imports], operationId: analyzeImport, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { content: { multipart/form-data: { schema: { type: object, required: [file], properties: { file: { type: string, format: binary } } } } } }, responses: { '201': { $ref: '#/components/responses/Json' }, '422': { $ref: '#/components/responses/Validation' } } }
+  /imports/{batch}:
+    parameters: [{ $ref: '#/components/parameters/BatchId' }]
+    get: { tags: [imports], operationId: showImport, responses: { '200': { $ref: '#/components/responses/Json' } } }
+  /imports/{batch}/resolutions:
+    parameters: [{ $ref: '#/components/parameters/BatchId' }]
+    patch: { tags: [imports], operationId: resolveImport, requestBody: { $ref: '#/components/requestBodies/VersionedJson' }, responses: { '200': { $ref: '#/components/responses/Json' }, '409': { $ref: '#/components/responses/Conflict' } } }
+  /imports/{batch}/commit:
+    parameters: [{ $ref: '#/components/parameters/BatchId' }]
+    post: { tags: [imports], operationId: commitImport, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/VersionedJson' }, responses: { '200': { $ref: '#/components/responses/Json' }, '409': { $ref: '#/components/responses/Conflict' } } }
+components:
+  securitySchemes:
+    cookieAuth: { type: apiKey, in: cookie, name: laravel_session }
+  parameters:
+    CategoryId: { name: category, in: path, required: true, schema: { type: string, pattern: '^[0-9]+$' } }
+    ItemId: { name: item, in: path, required: true, schema: { type: string, pattern: '^[0-9]+$' } }
+    VariantId: { name: variant, in: path, required: true, schema: { type: string, pattern: '^[0-9]+$' } }
+    MovementId: { name: movement, in: path, required: true, schema: { type: string, pattern: '^[0-9]+$' } }
+    BatchId: { name: batch, in: path, required: true, schema: { type: string, pattern: '^[0-9]+$' } }
+    PerPage: { name: perPage, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+    IdempotencyKey: { name: Idempotency-Key, in: header, required: true, schema: { type: string, minLength: 1, maxLength: 160 } }
+  requestBodies:
+    Json: { required: true, content: { application/json: { schema: { type: object, additionalProperties: true } } } }
+    VersionedJson: { required: true, content: { application/json: { schema: { type: object, required: [version], properties: { version: { type: integer, minimum: 1 } }, additionalProperties: true } } } }
+  responses:
+    Json: { description: JSON envelope, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+    Forbidden: { description: Permissão insuficiente }
+    Validation: { description: Dados inválidos }
+    Conflict: { description: Conflito de versão, saldo ou idempotência }
+  schemas:
+    Envelope:
+      type: object
+      required: [data]
+      properties:
+        data: { nullable: true }
+        meta: { type: object, additionalProperties: true }

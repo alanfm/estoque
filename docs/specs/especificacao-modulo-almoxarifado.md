@@ -385,11 +385,9 @@ Estados: ANALYZED → NEEDS_REVIEW ou READY → COMMITTING → IMPORTED; FAILED 
 
 Não agrupar linhas históricas de forma a perder preços, descrições ou origem. Política inicial: um movimento por linha da planilha; várias linhas podem compartilhar OS, sem exigir criar um único documento retroativamente.
 
-Não exigir preencher retroativamente justificativa ou OS inexistente. Campo ausente permanece NULL, flag de exceção e motivo de aceitação no lote; novas operações seguem validação completa.
+Por decisão de homologação da CTI em 30/09/2026, a carga inicial importa somente tuplas históricas completas. Linhas sem campo obrigatório para o fato — especialmente data ou quantidade — e quantidades obtidas apenas de fórmula/cache são marcadas como `SKIPPED`, não entram no livro e serão lançadas manualmente depois, com os dados conferidos. Campos opcionais legados, como custo desconhecido, continuam podendo ser `NULL` quando a tupla possui os campos obrigatórios.
 
-Data desconhecida: registrar NULL somente no legado, com exceção explícita; item fica sem cobertura histórica completa e não gera recomendação até saneamento. Os três registros sem data não recebem data inventada.
-
-Para esses registros, effective_on do livro também permite NULL. O saldo atual inclui todos os lançamentos, mas extratos por data exibem separadamente a quantidade de movimentos sem data e avisam que os saldos cronológicos não são plenamente determináveis. Relatórios por período não atribuem movimentos sem data a um dia arbitrário; mostram o total não alocado. A conciliação física resolve a disponibilidade atual, mas não cria cobertura histórica inexistente.
+As linhas rejeitadas por incompletude permanecem rastreáveis na prévia por aba/linha e motivo, mas não geram saldo, movimento ou recomendação. Não atribuir data, quantidade, OS, marca ou custo por suposição.
 
 Datas aprovadas: corrigir as cinco ocorrências 30/05/2003 vinculadas às OS 1001, 1002 e 1003 para 30/05/2023. O adaptador identifica exatamente linhas/valores antes de aplicar; não substituir todo ano 2003 indiscriminadamente.
 
@@ -397,17 +395,19 @@ Categorias Conectores/Patch Cord são deduplicadas conservando mapa de origem. Q
 
 ### 14.2 Saldos negativos
 
-PEN02=-3, SSD01=-3, HDN02=-1 e TN003=-1 exigem contagem e decisão. Importação pode preservar temporariamente esses deltas negativos em sessão exclusiva de implantação, com divergências registradas; isso não libera saldo negativo para novas operações.
+Por decisão de homologação da CTI em 30/09/2026, os saldos legados negativos de PEN02=-3, SSD01=-3, HDN02=-1 e TN003=-1 ficam com saldo operacional inicial zero. Não importar esses saldos negativos, não criar ajustes compensatórios automáticos e não transformar os números negativos em contagem física. As linhas correspondentes ficam fora do lote inicial e podem ser lançadas manualmente após conferência, se necessário.
 
-Após carga, gestor lança conciliação por variante com motivo e referência ao lote. Se contagem física for zero, ajustes seriam +3,+3,+1,+1, mas não executar esses números sem a contagem. Variações por marca também precisam ser conciliadas.
-
-Implantação só libera movimentação operacional quando os saldos das variantes estão conciliados e não negativos. O saldo final pode diferir de 2.944 após saneamento; relatório mostra saldo original, correção, ajuste e saldo final.
+Implantação só libera movimentação operacional quando o lote de tuplas completas estiver reconciliado e os saldos operacionais forem não negativos. O saldo final pode diferir de 2.944 porque linhas incompletas e os quatro casos negativos não entram na carga inicial; o relatório deve mostrar linhas importadas, linhas manuais pendentes e linhas excluídas com motivo.
 
 ### 14.3 Execução
 
 Importar em manutenção exclusiva, antes de lançamentos operacionais. Para o volume atual, uma transação para todos os fatos e saldos evita lote parcialmente visível. Parsing/resoluções ocorrem antes dessa transação. Falha reverte toda a carga, mantendo o lote/erro para diagnóstico.
 
 Reconciliação por código e variante: entradas, saídas, custos conhecidos, ajustes, saldo e exceções. Hash/lote e unique batch/aba/linha impedem duplicação. Sem exclusão automática do arquivo original.
+
+### 14.4 Decisão de implantação inicial
+
+Por decisão da CTI em 30/09/2026, a planilha v1.2 será usada inicialmente somente como referência histórica. Não haverá prévia, commit ou carga de movimentos na implantação inicial. Categorias, códigos, unidades e variantes serão cadastrados manualmente; linhas históricas incompletas ficam para lançamentos manuais futuros. O fluxo de importação permanece disponível para uma fase posterior, condicionada a autorização explícita.
 
 ## 15. Auditoria, eventos e manutenção
 
