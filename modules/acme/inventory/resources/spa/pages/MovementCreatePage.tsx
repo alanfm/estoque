@@ -12,6 +12,7 @@ import { useCallback, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { catalogService } from "../services/catalogService";
 import { movementService, type DraftInput } from "../services/movementService";
+import { VariantSelect } from "../components/VariantSelect";
 
 function MovementCreateForm({ type }: { type: "ENTRY" | "ISSUE" }) {
   const navigate = useNavigate();
@@ -113,16 +114,18 @@ function MovementCreateForm({ type }: { type: "ENTRY" | "ISSUE" }) {
           onSubmit={(event) => void submit(event)}
         >
           <Field id="variantId" label="Variante" required>
-            <Select id="variantId" name="variantId" required>
-              {variants.map((variant) => (
-                <option key={variant.id} value={variant.id}>
-                  {variant.item.code} — {variant.item.name} /{" "}
-                  {[variant.brand, variant.model, variant.description]
-                    .filter(Boolean)
-                    .join(" ")}
-                </option>
-              ))}
-            </Select>
+            <VariantSelect
+              options={variants.map((variant) => ({
+                value: variant.id,
+                label: `${variant.item.code} — ${variant.item.name} / ${[
+                  variant.brand,
+                  variant.model,
+                  variant.description,
+                ]
+                  .filter(Boolean)
+                  .join(" ")}`,
+              }))}
+            />
           </Field>
           <Field id="quantity" label="Quantidade" required>
             <Input
