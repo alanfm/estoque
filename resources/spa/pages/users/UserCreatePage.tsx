@@ -1,5 +1,6 @@
+import { FormModal } from "../../components/overlays/FormModal";
+import { UsersListPage } from "./UsersListPage";
 import { useNavigate } from "react-router";
-import { PageHeader } from "../../components/navigation/PageHeader";
 import { useRoleOptions } from "../../hooks/useRoleOptions";
 import { can } from "../../lib/permissions";
 import { useDocumentTitle } from "../../router/guards";
@@ -15,17 +16,13 @@ export function UserCreatePage() {
   const { roles, loading } = useRoleOptions(rolesAvailable);
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Criar usuário"
-        description="A conta receberá por e-mail um link para definir a própria senha."
-        breadcrumbs={[
-          { label: "Painel", to: "/" },
-          { label: "Usuários", to: "/admin/users" },
-          { label: "Criar" },
-        ]}
-      />
-
+    <FormModal
+      title="Criar usuário"
+      returnTo="/admin/users"
+      background={<UsersListPage />}
+      backgroundPermission="users.viewAny"
+      description="A conta receberá por e-mail um link para definir a própria senha."
+    >
       <UserForm
         defaultValues={{ name: "", email: "", roles: [] }}
         submitLabel="Criar usuário"
@@ -41,6 +38,6 @@ export function UserCreatePage() {
           });
         }}
       />
-    </div>
+    </FormModal>
   );
 }

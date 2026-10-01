@@ -1,6 +1,6 @@
+import CustomersPage from "./CustomersPage";
+import { FormModal, useDocumentTitle } from "@starterkit/module-kit";
 import { useNavigate } from "react-router";
-import { PageHeader } from "../../../../../../resources/spa/components/navigation/PageHeader";
-import { useDocumentTitle } from "../../../../../../resources/spa/router/guards";
 import { customersService } from "../services/customersService";
 import { CustomerForm } from "./CustomerForm";
 
@@ -9,16 +9,13 @@ export default function CustomerCreatePage() {
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Criar cliente"
-        description="Cadastre os dados de contato e da empresa."
-        breadcrumbs={[
-          { label: "Painel", to: "/" },
-          { label: "Clientes", to: "/admin/customers" },
-          { label: "Criar" },
-        ]}
-      />
+    <FormModal
+      title="Criar cliente"
+      returnTo="/admin/customers"
+      background={<CustomersPage />}
+      backgroundPermission="customers.viewAny"
+      description="Cadastre os dados de contato e da empresa."
+    >
       <CustomerForm
         defaultValues={{ name: "", email: "", phone: "", company: "" }}
         submitLabel="Criar cliente"
@@ -30,6 +27,6 @@ export default function CustomerCreatePage() {
           });
         }}
       />
-    </div>
+    </FormModal>
   );
 }

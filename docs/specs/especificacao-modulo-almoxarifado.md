@@ -342,7 +342,7 @@ Items: search, categoryId, active, situation; sort code/name/quantity/updatedAt.
 
 Rotas base /admin/inventory. Dashboard; items; items/new; items/{id}; items/{id}/edit; categories; movements; entries/new; issues/new; movements/{id}; adjustments/new; reports; imports.
 
-Criação/edição em páginas com breadcrumbs, PageHeader, salvar/cancelar. Formulários preservam conteúdo em falha recuperável. Todo dado tem loading, vazio, erro, sem permissão e sessão expirada. Filtros e paginação na URL.
+Criação/edição em modais sobre as listagens ou detalhes, com título acessível, salvar/cancelar e rolagem em telas pequenas (decisão do usuário em 01/10/2026). Rotas próprias permitem acesso direto e navegação pelo histórico; fechar retorna à listagem correspondente. Formulários preservam conteúdo em falha recuperável. Todo dado tem loading, vazio, erro, sem permissão e sessão expirada. Filtros e paginação na URL.
 
 Detalhe do item apresenta código, categoria, variantes e saldos, mínimo efetivo, sugestão, parâmetros e extrato. Saída mostra disponibilidade por variante. Quando OS fica vazia, observações recebem rótulo e ajuda para explicar sua ausência; validação também ocorre no servidor.
 

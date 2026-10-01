@@ -1,8 +1,9 @@
+import { FormModal } from "../../components/overlays/FormModal";
+import { UsersListPage } from "./UsersListPage";
 import { useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
 import { ErrorState } from "../../components/feedback/ErrorState";
 import { Spinner } from "../../components/feedback/Spinner";
-import { PageHeader } from "../../components/navigation/PageHeader";
 import { useAsync } from "../../hooks/useAsync";
 import { useRoleOptions } from "../../hooks/useRoleOptions";
 import { can } from "../../lib/permissions";
@@ -26,17 +27,13 @@ export function UserEditPage() {
   const { data, loading, error, reload } = useAsync(loader);
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Editar usuário"
-        description="Atualize os dados e os papéis da conta."
-        breadcrumbs={[
-          { label: "Painel", to: "/" },
-          { label: "Usuários", to: "/admin/users" },
-          { label: "Editar" },
-        ]}
-      />
-
+    <FormModal
+      title="Editar usuário"
+      returnTo="/admin/users"
+      background={<UsersListPage />}
+      backgroundPermission="users.viewAny"
+      description="Atualize os dados e os papéis da conta."
+    >
       {loading && !data ? (
         <div className="flex justify-center p-10">
           <Spinner label="Carregando usuário" />
@@ -64,6 +61,6 @@ export function UserEditPage() {
           }}
         />
       ) : null}
-    </div>
+    </FormModal>
   );
 }

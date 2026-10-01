@@ -1,10 +1,13 @@
+import CustomersPage from "./CustomersPage";
+import {
+  FormModal,
+  ErrorState,
+  Spinner,
+  useAsync,
+  useDocumentTitle,
+} from "@starterkit/module-kit";
 import { useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
-import { ErrorState } from "../../../../../../resources/spa/components/feedback/ErrorState";
-import { Spinner } from "../../../../../../resources/spa/components/feedback/Spinner";
-import { PageHeader } from "../../../../../../resources/spa/components/navigation/PageHeader";
-import { useAsync } from "../../../../../../resources/spa/hooks/useAsync";
-import { useDocumentTitle } from "../../../../../../resources/spa/router/guards";
 import { customersService } from "../services/customersService";
 import { CustomerForm } from "./CustomerForm";
 
@@ -19,17 +22,13 @@ export default function CustomerEditPage() {
   const { data, loading, error, reload } = useAsync(loader);
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Editar cliente"
-        description="Atualize os dados de contato e da empresa."
-        breadcrumbs={[
-          { label: "Painel", to: "/" },
-          { label: "Clientes", to: "/admin/customers" },
-          { label: "Editar" },
-        ]}
-      />
-
+    <FormModal
+      title="Editar cliente"
+      returnTo="/admin/customers"
+      background={<CustomersPage />}
+      backgroundPermission="customers.viewAny"
+      description="Atualize os dados de contato e da empresa."
+    >
       {loading && !data ? (
         <div className="flex justify-center p-10">
           <Spinner label="Carregando cliente" />
@@ -54,6 +53,6 @@ export default function CustomerEditPage() {
           }}
         />
       ) : null}
-    </div>
+    </FormModal>
   );
 }

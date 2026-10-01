@@ -11,6 +11,7 @@ Frontends de módulos importam a superfície de host exclusivamente de `@starter
 - Opções: `ApiRequestOptions` e `QueryValue`; aceitam método, query, `AbortSignal`, headers adicionais e corpo JSON ou `FormData`.
 - Tipos JSON: `ApiResource<T>`, `Paginated<T>`, metadados/links de paginação, `ListQuery`, `ApiErrorBody` e tipos de validação.
 - Permanecem também disponíveis os exports de tipos de módulo, componentes visuais e `useSession` existentes.
+- `FormModal` padroniza formulários em modais associados a rotas: recebe `title`, `description` opcional, `returnTo`, `children`, `background` opcional e `backgroundPermission` opcional. A listagem de fundo só é montada quando autorizada; X, Esc e Fechar navegam para `returnTo`. Clique fora não descarta o formulário. `useDocumentTitle` também está disponível para páginas de módulos.
 - Listagens usam os mesmos primitivos da página de usuários: `Table`, `TableWrapper`, `TableHeader`, `TableBody`, `TableRow`, `TableHead`, `TableCell`, `Badge`, `Pagination`, `SimpleTooltip`, `EmptyState`, `ErrorState` e `Spinner`. `Select`, `useAsync` e `can` também fazem parte da superfície pública.
 
 ## Sessão, headers e corpo

@@ -51,6 +51,7 @@ export default function MovementDetailPage() {
   const [message, setMessage] = useState("");
   const [reason, setReason] = useState("");
   const [editOpen, setEditOpen] = useState(false);
+  const [reverseOpen, setReverseOpen] = useState(false);
   async function cancel() {
     if (!movement) return;
     setBusy(true);
@@ -147,6 +148,7 @@ export default function MovementDetailPage() {
     try {
       await movementService.reverse(String(movement.id), reason);
       setReason("");
+      setReverseOpen(false);
       reload();
     } catch (caught) {
       setMessage(
@@ -402,29 +404,59 @@ export default function MovementDetailPage() {
       {canReverse &&
         movement.status === "POSTED" &&
         movement.type !== "REVERSAL" && (
-          <form
-            className="grid max-w-2xl gap-3"
-            onSubmit={(event) => void reverse(event)}
-          >
-            <h2 className="text-lg font-semibold">Estorno integral</h2>
-            <p>
-              O sistema lançará a compensação de todas as linhas. A operação
-              será recusada se deixar alguma variante com saldo negativo.
-            </p>
-            <label htmlFor="reverse-reason">Motivo obrigatório</label>
-            <Textarea
-              id="reverse-reason"
-              required
-              maxLength={5000}
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-            />
-            <div>
-              <Button type="submit" variant="danger" loading={busy}>
-                Estornar movimento
-              </Button>
-            </div>
-          </form>
+          <>
+            <Button
+              variant="danger"
+              onClick={() => {
+                setMessage("");
+                setReason("");
+                setReverseOpen(true);
+              }}
+            >
+              Estornar movimento
+            </Button>
+            <Dialog open={reverseOpen} onOpenChange={setReverseOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Estorno integral</DialogTitle>
+                  <DialogDescription>
+                    Informe o motivo para estornar este movimento.
+                  </DialogDescription>
+                </DialogHeader>
+                <form
+                  className="grid max-w-2xl gap-3"
+                  onSubmit={(event) => void reverse(event)}
+                >
+                  <p>
+                    O sistema lançará a compensação de todas as linhas. A
+                    operação será recusada se deixar alguma variante com saldo
+                    negativo.
+                  </p>
+                  <label htmlFor="reverse-reason">Motivo obrigatório</label>
+                  <Textarea
+                    id="reverse-reason"
+                    required
+                    maxLength={5000}
+                    value={reason}
+                    onChange={(event) => setReason(event.target.value)}
+                  />
+                  {message ? <Alert variant="danger">{message}</Alert> : null}
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setReverseOpen(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button type="submit" variant="danger" loading={busy}>
+                      Estornar movimento
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </>
         )}
       <Link className="underline" to="/admin/inventory/movements">
         Voltar à lista

@@ -1,12 +1,15 @@
+import ItemsPage from "./ItemsPage";
+import {
+  FormModal,
+  Button,
+  Field,
+  Input,
+  Select,
+  Textarea,
+  useAsync,
+} from "@starterkit/module-kit";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router";
-import { Button } from "../../../../../../resources/spa/components/actions/Button";
-import { Field } from "../../../../../../resources/spa/components/forms/Field";
-import { Input } from "../../../../../../resources/spa/components/forms/Input";
-import { Select } from "../../../../../../resources/spa/components/forms/Select";
-import { Textarea } from "../../../../../../resources/spa/components/forms/Textarea";
-import { PageHeader } from "../../../../../../resources/spa/components/navigation/PageHeader";
-import { useAsync } from "../../../../../../resources/spa/hooks/useAsync";
 import { catalogService } from "../services/catalogService";
 
 export default function ItemCreatePage() {
@@ -43,14 +46,12 @@ export default function ItemCreatePage() {
     }
   }
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Novo item"
-        breadcrumbs={[
-          { label: "Almoxarifado", to: "/admin/inventory" },
-          { label: "Novo item" },
-        ]}
-      />
+    <FormModal
+      title="Novo item"
+      returnTo="/admin/inventory"
+      background={<ItemsPage />}
+      backgroundPermission="inventory.items.viewAny"
+    >
       {error && <p role="alert">{error}</p>}
       <form
         className="max-w-2xl space-y-4"
@@ -96,6 +97,6 @@ export default function ItemCreatePage() {
           Criar item
         </Button>
       </form>
-    </div>
+    </FormModal>
   );
 }

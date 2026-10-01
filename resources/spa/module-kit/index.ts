@@ -42,6 +42,8 @@ export {
 } from "../components/data-display/Table";
 export { Pagination } from "../components/navigation/Pagination";
 export { SimpleTooltip } from "../components/overlays/Tooltip";
+export { FormModal } from "../components/overlays/FormModal";
+export { useDocumentTitle } from "../router/guards";
 export {
   Dialog,
   DialogClose,

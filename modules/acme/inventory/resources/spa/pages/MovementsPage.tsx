@@ -121,7 +121,10 @@ export default function MovementsPage() {
           canCreateEntry || canCreateIssue || canAdjust ? (
             <div className="flex flex-wrap gap-2">
               {canCreateEntry ? (
-                <Button asChild>
+                <Button
+                  asChild
+                  className="border-emerald-700 bg-transparent text-emerald-700 hover:border-emerald-800 hover:bg-transparent hover:text-emerald-800"
+                >
                   <Link to="/admin/inventory/movements/entry">
                     <Plus className="size-4" aria-hidden="true" />
                     Nova entrada
@@ -131,7 +134,7 @@ export default function MovementsPage() {
               {canCreateIssue ? (
                 <Button
                   asChild
-                  variant={canCreateEntry ? "secondary" : "primary"}
+                  className="border-orange-700 bg-transparent text-orange-700 hover:border-orange-800 hover:bg-transparent hover:text-orange-800"
                 >
                   <Link to="/admin/inventory/movements/issue">
                     <Plus className="size-4" aria-hidden="true" />
@@ -142,7 +145,7 @@ export default function MovementsPage() {
               {canAdjust ? (
                 <Button
                   type="button"
-                  variant="secondary"
+                  className="border-blue-700 bg-transparent text-blue-700 hover:border-blue-800 hover:bg-transparent hover:text-blue-800"
                   onClick={() => {
                     setCountMessage("");
                     setCountOpen(true);
@@ -196,7 +199,13 @@ export default function MovementsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-ink-secondary">
-                    {movement.occurred_on ?? "—"}
+                    {movement.occurred_on
+                      ? movement.occurred_on
+                          .slice(0, 10)
+                          .split("-")
+                          .reverse()
+                          .join("/")
+                      : "—"}
                   </TableCell>
                   <TableCell className="text-right">
                     {canView ? (

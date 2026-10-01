@@ -1,8 +1,9 @@
+import { FormModal } from "../../components/overlays/FormModal";
+import { RolesListPage } from "./RolesListPage";
 import { useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
 import { ErrorState } from "../../components/feedback/ErrorState";
 import { Spinner } from "../../components/feedback/Spinner";
-import { PageHeader } from "../../components/navigation/PageHeader";
 import { useAsync } from "../../hooks/useAsync";
 import { usePermissionOptions } from "../../hooks/usePermissionOptions";
 import { can } from "../../lib/permissions";
@@ -27,17 +28,13 @@ export function RoleEditPage() {
   const { data, loading, error, reload } = useAsync(loader);
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Editar papel"
-        description="Atualize o nome e as permissões do papel."
-        breadcrumbs={[
-          { label: "Painel", to: "/" },
-          { label: "Papéis", to: "/admin/roles" },
-          { label: "Editar" },
-        ]}
-      />
-
+    <FormModal
+      title="Editar papel"
+      returnTo="/admin/roles"
+      background={<RolesListPage />}
+      backgroundPermission="roles.viewAny"
+      description="Atualize o nome e as permissões do papel."
+    >
       {loading && !data ? (
         <div className="flex justify-center p-10">
           <Spinner label="Carregando papel" />
@@ -75,6 +72,6 @@ export function RoleEditPage() {
           }}
         />
       ) : null}
-    </div>
+    </FormModal>
   );
 }

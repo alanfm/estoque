@@ -1,11 +1,14 @@
+import MovementsPage from "./MovementsPage";
+import {
+  FormModal,
+  Button,
+  Field,
+  Input,
+  Select,
+  Textarea,
+  useAsync,
+} from "@starterkit/module-kit";
 import { useCallback, useMemo, useState } from "react";
-import { Button } from "../../../../../../resources/spa/components/actions/Button";
-import { Field } from "../../../../../../resources/spa/components/forms/Field";
-import { Input } from "../../../../../../resources/spa/components/forms/Input";
-import { Select } from "../../../../../../resources/spa/components/forms/Select";
-import { Textarea } from "../../../../../../resources/spa/components/forms/Textarea";
-import { PageHeader } from "../../../../../../resources/spa/components/navigation/PageHeader";
-import { useAsync } from "../../../../../../resources/spa/hooks/useAsync";
 import { catalogService } from "../services/catalogService";
 import { movementService } from "../services/movementService";
 
@@ -69,15 +72,13 @@ export default function AdjustmentCreatePage() {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Contagem e ajuste"
-        description="Informe o saldo físico conferido. A diferença será registrada no livro."
-        breadcrumbs={[
-          { label: "Almoxarifado", to: "/admin/inventory" },
-          { label: "Contagem" },
-        ]}
-      />
+    <FormModal
+      title="Contagem e ajuste"
+      returnTo="/admin/inventory/movements"
+      background={<MovementsPage />}
+      backgroundPermission="inventory.movements.viewAny"
+      description="Informe o saldo físico conferido. A diferença será registrada no livro."
+    >
       {message && <p role="status">{message}</p>}
       {loading && <p role="status">Carregando saldos…</p>}
       {error && (
@@ -142,6 +143,6 @@ export default function AdjustmentCreatePage() {
           </div>
         </form>
       )}
-    </div>
+    </FormModal>
   );
 }

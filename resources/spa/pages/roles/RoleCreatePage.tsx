@@ -1,5 +1,6 @@
+import { FormModal } from "../../components/overlays/FormModal";
+import { RolesListPage } from "./RolesListPage";
 import { useNavigate } from "react-router";
-import { PageHeader } from "../../components/navigation/PageHeader";
 import { usePermissionOptions } from "../../hooks/usePermissionOptions";
 import { can } from "../../lib/permissions";
 import { useDocumentTitle } from "../../router/guards";
@@ -15,17 +16,13 @@ export function RoleCreatePage() {
   const { permissions, loading } = usePermissionOptions(permissionsAvailable);
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Criar papel"
-        description="Defina um identificador e selecione as permissões do papel."
-        breadcrumbs={[
-          { label: "Painel", to: "/" },
-          { label: "Papéis", to: "/admin/roles" },
-          { label: "Criar" },
-        ]}
-      />
-
+    <FormModal
+      title="Criar papel"
+      returnTo="/admin/roles"
+      background={<RolesListPage />}
+      backgroundPermission="roles.viewAny"
+      description="Defina um identificador e selecione as permissões do papel."
+    >
       <RoleForm
         defaultValues={{ slug: "", name: "", permissions: [] }}
         submitLabel="Criar papel"
@@ -41,6 +38,6 @@ export function RoleCreatePage() {
           });
         }}
       />
-    </div>
+    </FormModal>
   );
 }

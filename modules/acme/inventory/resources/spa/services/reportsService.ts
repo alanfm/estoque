@@ -16,12 +16,41 @@ export type ReportFilters = {
   perPage?: number;
 };
 
+export type DashboardData = {
+  asOf: string;
+  period: { from: string; to: string };
+  activeItems: number;
+  inconsistentItems: number;
+  outOfStockItems: number;
+  itemsWithoutMinimum: number;
+  replenishmentAlerts: number;
+  regularItems: number;
+  attentionItems: number;
+  movementCount: number;
+  alerts: {
+    id: number;
+    code: string;
+    name: string;
+    unit: string;
+    stock: number;
+    minimumStock: number | null;
+    situation: string;
+  }[];
+  movementSeries: {
+    date: string;
+    entries: number;
+    issues: number;
+    adjustments: number;
+    reversals: number;
+  }[];
+};
+
 export const reportsService = {
   dashboard(filters: Pick<ReportFilters, "from" | "to">, signal?: AbortSignal) {
-    return apiRequest<{ data: Record<string, string | number | object> }>(
-      "/inventory/dashboard",
-      { query: filters, signal },
-    );
+    return apiRequest<{ data: DashboardData }>("/inventory/dashboard", {
+      query: filters,
+      signal,
+    });
   },
   report(type: ReportType, filters: ReportFilters, signal?: AbortSignal) {
     return apiRequest<Paginated<Record<string, unknown>> & { asOf: string }>(

@@ -42,6 +42,33 @@ final class InventoryReportsTest extends TestCase
         $this->actingAs($unauthorized)->getJson('/api/v1/inventory/reports/stock')->assertForbidden();
     }
 
+    public function test_dashboard_prioritizes_inconsistencies_and_groups_movements_with_inclusive_dates(): void
+    {
+        [$user, $item, $variant, $location] = $this->fixture(['inventory.dashboard.view']);
+        DB::table('inventory_balances')->where('variant_id', $variant)->update(['quantity' => -1]);
+        $other = DB::table('inventory_product_variants')->insertGetId([
+            'item_id' => $item, 'brand' => 'Outra', 'description' => 'Outra variante',
+            'identity_hash' => hash('sha256', 'other-'.$item), 'active' => true, 'version' => 1,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        DB::table('inventory_balances')->insert(['location_id' => $location, 'variant_id' => $other, 'quantity' => 2, 'version' => 1]);
+        $this->ledger($user->id, $location, $variant, 'ENTRY', '2026-09-01', 2, '');
+        $this->ledger($user->id, $location, $variant, 'ISSUE', '2026-09-29', -1, '');
+        $this->ledger($user->id, $location, $variant, 'ENTRY', '2026-08-31', 1, '');
+
+        $this->actingAs($user)->getJson('/api/v1/inventory/dashboard?from=2026-09-01&to=2026-09-29')
+            ->assertOk()->assertJsonPath('data.inconsistentItems', 1)
+            ->assertJsonPath('data.replenishmentAlerts', 0)->assertJsonPath('data.attentionItems', 1)
+            ->assertJsonPath('data.regularItems', 0)->assertJsonPath('data.alerts.0.situation', 'INCONSISTENT')
+            ->assertJsonPath('data.alerts.0.stock', 1)->assertJsonPath('data.movementCount', 2)
+            ->assertJsonCount(2, 'data.movementSeries')
+            ->assertJsonPath('data.movementSeries.0.date', '2026-09-01')
+            ->assertJsonPath('data.movementSeries.0.entries', 1)
+            ->assertJsonPath('data.movementSeries.1.issues', 1);
+        $this->getJson('/api/v1/inventory/dashboard?from=2026-09-02&to=2026-09-28')
+            ->assertOk()->assertJsonPath('data.movementCount', 0)->assertJsonCount(0, 'data.movementSeries');
+    }
+
     public function test_consumption_filters_inclusive_dates_groups_reversals_and_exports_safe_csv_and_xlsx(): void
     {
         [$user, $item, $variant, $location] = $this->fixture(['inventory.reports.view', 'inventory.reports.export']);

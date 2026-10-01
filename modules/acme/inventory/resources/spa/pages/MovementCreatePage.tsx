@@ -1,12 +1,15 @@
+import MovementsPage from "./MovementsPage";
+import {
+  FormModal,
+  Button,
+  Field,
+  Input,
+  Select,
+  Textarea,
+  useAsync,
+} from "@starterkit/module-kit";
 import { useCallback, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { Button } from "../../../../../../resources/spa/components/actions/Button";
-import { Field } from "../../../../../../resources/spa/components/forms/Field";
-import { Input } from "../../../../../../resources/spa/components/forms/Input";
-import { Select } from "../../../../../../resources/spa/components/forms/Select";
-import { Textarea } from "../../../../../../resources/spa/components/forms/Textarea";
-import { PageHeader } from "../../../../../../resources/spa/components/navigation/PageHeader";
-import { useAsync } from "../../../../../../resources/spa/hooks/useAsync";
 import { catalogService } from "../services/catalogService";
 import { movementService, type DraftInput } from "../services/movementService";
 
@@ -84,14 +87,12 @@ function MovementCreateForm({ type }: { type: "ENTRY" | "ISSUE" }) {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={type === "ENTRY" ? "Nova entrada" : "Nova saída"}
-        breadcrumbs={[
-          { label: "Movimentos", to: "/admin/inventory/movements" },
-          { label: "Novo rascunho" },
-        ]}
-      />
+    <FormModal
+      title={type === "ENTRY" ? "Nova entrada" : "Nova saída"}
+      returnTo="/admin/inventory/movements"
+      background={<MovementsPage />}
+      backgroundPermission="inventory.movements.viewAny"
+    >
       {message && <p role="alert">{message}</p>}
       {loading && <p role="status">Carregando variantes…</p>}
       {error && (
@@ -206,7 +207,7 @@ function MovementCreateForm({ type }: { type: "ENTRY" | "ISSUE" }) {
           </div>
         </form>
       )}
-    </div>
+    </FormModal>
   );
 }
 

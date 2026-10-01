@@ -1,3 +1,5 @@
+import { FormModal } from "../../components/overlays/FormModal";
+import { DashboardPage } from "../DashboardPage";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "../../components/actions/Button";
@@ -48,15 +50,12 @@ export function ChangePasswordPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-h1">Alterar senha</h1>
-        <p className="text-body text-ink-secondary">
-          Informe sua senha atual e escolha uma nova senha com pelo menos 12
-          caracteres.
-        </p>
-      </div>
-
+    <FormModal
+      title="Alterar senha"
+      description="Informe sua senha atual e escolha uma nova senha com pelo menos 12 caracteres."
+      returnTo="/"
+      background={<DashboardPage />}
+    >
       <div className="max-w-[720px] space-y-4">
         {success ? (
           <Alert variant="success" title="Senha alterada">
@@ -124,6 +123,6 @@ export function ChangePasswordPage() {
           </Button>
         </form>
       </div>
-    </div>
+    </FormModal>
   );
 }
