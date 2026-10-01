@@ -246,16 +246,36 @@ class AuthorizationTest extends TestCase
         $this->getJson('/api/v1/auth/user')
             ->assertOk()
             ->assertJsonPath('data.roles', ['operator'])
+            ->assertJsonPath('data.isSuperAdmin', false)
             ->assertJsonPath('data.permissions', ['users.view', 'users.viewAny']);
 
         $root = $this->superAdmin('root@example.test');
         $this->actingAs($root);
         $response = $this->getJson('/api/v1/auth/user')->assertOk();
+        $response->assertJsonPath('data.isSuperAdmin', true);
         $this->assertSame(
             Permission::query()->whereNull('obsolete_at')->count(),
             count($response->json('data.permissions')),
         );
         $this->assertContains('roles.create', $response->json('data.permissions'));
+    }
+
+    public function test_super_admin_bypasses_module_permission_gates_without_role_assignments(): void
+    {
+        $this->artisan('core:sync-permissions')->assertExitCode(0);
+        $this->artisan('inventory:install')->assertExitCode(0);
+
+        $root = $this->superAdmin();
+        $this->actingAs($root);
+
+        self::assertSame([], $root->roles()->firstOrFail()->permissions()->pluck('permissions.name')->all());
+        self::assertTrue($root->hasPermission('inventory.dashboard.view'));
+        self::assertTrue($root->hasPermission('inventory.imports.execute'));
+
+        $this->getJson('/api/v1/inventory/dashboard')->assertOk();
+        $this->getJson('/api/v1/inventory/movements?perPage=50')->assertOk();
+        $this->getJson('/api/v1/inventory/reports/stock?perPage=20')->assertOk();
+        $this->getJson('/api/v1/inventory/imports')->assertOk();
     }
 
     /**

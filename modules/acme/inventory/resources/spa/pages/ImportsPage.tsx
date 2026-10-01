@@ -234,7 +234,7 @@ export default function ImportsPage() {
         </div>
       ) : error ? (
         <ErrorState requestId={error.requestId} onRetry={reload} />
-      ) : data && data.data.length === 0 ? (
+      ) : data && data.data.data.length === 0 ? (
         <EmptyState
           icon={FileSpreadsheet}
           title="Nenhum lote"
@@ -253,7 +253,7 @@ export default function ImportsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.data.map((entry) => (
+              {data.data.data.map((entry) => (
                 <TableRow key={entry.id}>
                   <TableCell className="font-medium">#{entry.id}</TableCell>
                   <TableCell className="text-ink-secondary">

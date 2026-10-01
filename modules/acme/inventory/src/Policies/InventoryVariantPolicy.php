@@ -9,11 +9,11 @@ final class InventoryVariantPolicy
 {
     public function create(User $user): bool
     {
-        return $user->hasPermission('inventory.variants.create');
+        return $user->can('inventory.variants.create');
     }
 
     public function update(User $user, InventoryProductVariant $variant): bool
     {
-        return $user->hasPermission('inventory.variants.update');
+        return $user->can('inventory.variants.update');
     }
 }

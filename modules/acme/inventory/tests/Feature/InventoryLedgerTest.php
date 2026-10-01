@@ -58,7 +58,7 @@ final class InventoryLedgerTest extends TestCase
 
     private function movement(int $userId, int $locationId, int $variantId, string $type, int $quantity): int
     {
-        $movement = DB::table('inventory_movements')->insertGetId(['type' => $type, 'status' => 'DRAFT', 'location_id' => $locationId, 'occurred_on' => now()->toDateString(), 'created_by' => $userId, 'created_at' => now(), 'updated_at' => now()]);
+        $movement = DB::table('inventory_movements')->insertGetId(['type' => $type, 'status' => 'DRAFT', 'location_id' => $locationId, 'occurred_on' => now()->toDateString(), 'origin' => $type === 'ENTRY' ? 'PURCHASE' : null, 'document_number' => $type === 'ENTRY' ? 'TEST-1' : null, 'description' => $type === 'ISSUE' ? 'Teste' : null, 'service_order_number' => $type === 'ISSUE' ? 'OS-1' : null, 'created_by' => $userId, 'created_at' => now(), 'updated_at' => now()]);
         DB::table('inventory_movement_lines')->insert(['movement_id' => $movement, 'variant_id' => $variantId, 'quantity' => $quantity, 'snapshot' => json_encode(['description' => 'Variante teste'], JSON_THROW_ON_ERROR), 'created_at' => now(), 'updated_at' => now()]);
 
         return $movement;

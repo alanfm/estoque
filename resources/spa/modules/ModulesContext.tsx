@@ -5,6 +5,7 @@ const EMPTY_REGISTRY: FrontendModuleRegistry = {
   modules: [],
   routes: [],
   navigation: [],
+  navigationGroups: [],
   issues: [],
 };
 

@@ -7,6 +7,7 @@
 export type {
   FrontendModule,
   ModuleContext,
+  ModuleNavigationGroup,
   ModuleNavigationItem,
   ModuleRoute,
 } from "../modules/types";
@@ -41,6 +42,16 @@ export {
 } from "../components/data-display/Table";
 export { Pagination } from "../components/navigation/Pagination";
 export { SimpleTooltip } from "../components/overlays/Tooltip";
+export {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../components/overlays/Dialog";
 export { useAsync } from "../hooks/useAsync";
 export { can } from "../lib/permissions";
 export { Alert } from "../components/feedback/Alert";
@@ -50,5 +61,6 @@ export { Spinner } from "../components/feedback/Spinner";
 export { Field } from "../components/forms/Field";
 export { Input } from "../components/forms/Input";
 export { Select } from "../components/forms/Select";
+export { Textarea } from "../components/forms/Textarea";
 export { PageHeader } from "../components/navigation/PageHeader";
 export { useSession } from "../stores/session/SessionContext";

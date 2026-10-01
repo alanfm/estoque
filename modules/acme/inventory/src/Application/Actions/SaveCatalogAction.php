@@ -15,7 +15,7 @@ final class SaveCatalogAction
     {
         $name = trim($data['name']);
 
-        return InventoryCategory::query()->create(['name' => $name, 'normalized_name' => mb_strtolower($name), 'active' => true, 'version' => 1]);
+        return InventoryCategory::query()->create(['name' => $name, 'observations' => $this->nullableTrim($data['observations'] ?? null), 'normalized_name' => mb_strtolower($name), 'active' => true, 'version' => 1]);
     }
 
     public function updateCategory(InventoryCategory $category, array $data): InventoryCategory
@@ -24,7 +24,7 @@ final class SaveCatalogAction
             $locked = InventoryCategory::query()->lockForUpdate()->findOrFail($category->id);
             $this->checkVersion($locked->version, $data['version']);
             $name = trim($data['name']);
-            $locked->fill(['name' => $name, 'normalized_name' => mb_strtolower($name), 'active' => $data['active'], 'version' => $locked->version + 1])->save();
+            $locked->fill(['name' => $name, 'observations' => $this->nullableTrim($data['observations'] ?? null), 'normalized_name' => mb_strtolower($name), 'active' => $data['active'], 'version' => $locked->version + 1])->save();
 
             return $locked->refresh();
         });

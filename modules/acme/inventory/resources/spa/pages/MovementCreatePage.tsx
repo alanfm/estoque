@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router";
 import { Button } from "../../../../../../resources/spa/components/actions/Button";
 import { Field } from "../../../../../../resources/spa/components/forms/Field";
 import { Input } from "../../../../../../resources/spa/components/forms/Input";
+import { Select } from "../../../../../../resources/spa/components/forms/Select";
+import { Textarea } from "../../../../../../resources/spa/components/forms/Textarea";
 import { PageHeader } from "../../../../../../resources/spa/components/navigation/PageHeader";
 import { useAsync } from "../../../../../../resources/spa/hooks/useAsync";
 import { catalogService } from "../services/catalogService";
@@ -110,12 +112,7 @@ function MovementCreateForm({ type }: { type: "ENTRY" | "ISSUE" }) {
           onSubmit={(event) => void submit(event)}
         >
           <Field id="variantId" label="Variante" required>
-            <select
-              id="variantId"
-              name="variantId"
-              required
-              className="w-full rounded border p-2"
-            >
+            <Select id="variantId" name="variantId" required>
               {variants.map((variant) => (
                 <option key={variant.id} value={variant.id}>
                   {variant.item.code} — {variant.item.name} /{" "}
@@ -124,7 +121,7 @@ function MovementCreateForm({ type }: { type: "ENTRY" | "ISSUE" }) {
                     .join(" ")}
                 </option>
               ))}
-            </select>
+            </Select>
           </Field>
           <Field id="quantity" label="Quantidade" required>
             <Input
@@ -142,18 +139,14 @@ function MovementCreateForm({ type }: { type: "ENTRY" | "ISSUE" }) {
           {type === "ENTRY" ? (
             <>
               <Field id="origin" label="Origem" required>
-                <select
-                  id="origin"
-                  name="origin"
-                  className="w-full rounded border p-2"
-                >
+                <Select id="origin" name="origin">
                   <option value="PURCHASE">Compra</option>
                   <option value="DONATION">Doação</option>
                   <option value="INITIAL_STOCK">Estoque inicial</option>
                   <option value="RETURN">Devolução</option>
                   <option value="TRANSFER_RECEIPT">Recebimento externo</option>
                   <option value="OTHER">Outra</option>
-                </select>
+                </Select>
               </Field>
               <Field
                 id="documentNumber"
@@ -200,12 +193,7 @@ function MovementCreateForm({ type }: { type: "ENTRY" | "ISSUE" }) {
                 : "Observações (obrigatórias sem OS)"
             }
           >
-            <textarea
-              id="observations"
-              name="observations"
-              maxLength={5000}
-              className="w-full rounded border p-2"
-            />
+            <Textarea id="observations" name="observations" maxLength={5000} />
           </Field>
           <p className="md:col-span-2 text-sm">
             O rascunho pode ficar incompleto e não altera nem reserva saldo. As

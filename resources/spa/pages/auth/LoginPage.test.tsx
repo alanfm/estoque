@@ -38,6 +38,7 @@ describe("LoginPage", () => {
       email: "ana@example.com",
       roles: [],
       permissions: [],
+      isSuperAdmin: false,
     });
 
     renderWithProviders(<LoginPage />, { withSession: true });

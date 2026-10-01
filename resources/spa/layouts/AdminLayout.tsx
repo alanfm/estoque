@@ -7,7 +7,7 @@ import {
   Menu,
   User as UserIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Outlet, useNavigate } from "react-router";
 import { Button } from "../components/actions/Button";
 import { AdminNav } from "../components/navigation/AdminNav";
@@ -34,10 +34,41 @@ export function AdminLayout() {
     () => window.localStorage.getItem(SIDEBAR_KEY) === "1",
   );
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [desktopNavReady, setDesktopNavReady] = useState(false);
+  const pendingDesktopGroupFocus = useRef<string | null>(null);
+  const desktopNavRef = useRef<{
+    expandGroup(moduleName: string): void;
+  } | null>(null);
 
   useEffect(() => {
     window.localStorage.setItem(SIDEBAR_KEY, collapsed ? "1" : "0");
   }, [collapsed]);
+
+  useEffect(() => {
+    if (collapsed || !desktopNavReady || !pendingDesktopGroupFocus.current)
+      return;
+    const moduleName = pendingDesktopGroupFocus.current;
+    pendingDesktopGroupFocus.current = null;
+    desktopNavRef.current?.expandGroup(moduleName);
+  }, [collapsed, desktopNavReady, expandedGroups]);
+
+  const toggleGroup = (moduleName: string) => {
+    setExpandedGroups((current) => {
+      const next = new Set(current);
+      if (next.has(moduleName)) next.delete(moduleName);
+      else next.add(moduleName);
+      return next;
+    });
+  };
+
+  const expandSidebarForGroup = (moduleName: string) => {
+    pendingDesktopGroupFocus.current = moduleName;
+    setCollapsed(false);
+    setExpandedGroups((current) => new Set(current).add(moduleName));
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -112,7 +143,21 @@ export function AdminLayout() {
             className="sticky top-16 hidden h-[calc(100dvh-67px)] shrink-0 flex-col bg-inverse lg:flex"
             style={{ width: collapsed ? 72 : 272 }}
           >
-            <AdminNav user={user} collapsed={collapsed} />
+            <AdminNav
+              user={user}
+              collapsed={collapsed}
+              instance="desktop"
+              expandedGroups={expandedGroups}
+              onToggleGroup={toggleGroup}
+              onExpandSidebar={expandSidebarForGroup}
+              imperativeRef={desktopNavRef}
+              onReady={() => setDesktopNavReady(true)}
+              onCollapsedGroupActivate={(moduleName) => {
+                setExpandedGroups((current) =>
+                  new Set(current).add(moduleName),
+                );
+              }}
+            />
             <div className="border-t border-ink-inverse/15 p-3">
               <Button
                 variant="ghost"
@@ -158,7 +203,13 @@ export function AdminLayout() {
           <div className="flex h-16 items-center px-4">
             <Logo variant="inverse" />
           </div>
-          <AdminNav user={user} onNavigate={() => setMobileOpen(false)} />
+          <AdminNav
+            user={user}
+            instance="mobile"
+            expandedGroups={expandedGroups}
+            onToggleGroup={toggleGroup}
+            onNavigate={() => setMobileOpen(false)}
+          />
           <DialogPrimitive.Close asChild>
             <Button
               variant="ghost"

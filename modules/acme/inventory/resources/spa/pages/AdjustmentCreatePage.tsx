@@ -2,6 +2,8 @@ import { useCallback, useMemo, useState } from "react";
 import { Button } from "../../../../../../resources/spa/components/actions/Button";
 import { Field } from "../../../../../../resources/spa/components/forms/Field";
 import { Input } from "../../../../../../resources/spa/components/forms/Input";
+import { Select } from "../../../../../../resources/spa/components/forms/Select";
+import { Textarea } from "../../../../../../resources/spa/components/forms/Textarea";
 import { PageHeader } from "../../../../../../resources/spa/components/navigation/PageHeader";
 import { useAsync } from "../../../../../../resources/spa/hooks/useAsync";
 import { catalogService } from "../services/catalogService";
@@ -90,14 +92,13 @@ export default function AdjustmentCreatePage() {
           onSubmit={(event) => void submit(event)}
         >
           <Field id="variantId" label="Variante" required>
-            <select
+            <Select
               id="variantId"
               value={selected?.variant.id ?? ""}
               onChange={(event) => {
                 setVariantId(event.target.value);
                 setSelectedCount("");
               }}
-              className="w-full rounded border p-2"
             >
               {variants.map(({ item, variant }) => (
                 <option key={variant.id} value={variant.id}>
@@ -105,7 +106,7 @@ export default function AdjustmentCreatePage() {
                   {variant.model ?? ""} {variant.description}
                 </option>
               ))}
-            </select>
+            </Select>
           </Field>
           <p>
             Saldo atual:{" "}
@@ -128,13 +129,7 @@ export default function AdjustmentCreatePage() {
             {delta}
           </p>
           <Field id="reason" label="Motivo" required>
-            <textarea
-              id="reason"
-              name="reason"
-              required
-              maxLength={5000}
-              className="w-full rounded border p-2"
-            />
+            <Textarea id="reason" name="reason" required maxLength={5000} />
           </Field>
           <p className="text-sm">
             Se o saldo mudar após a leitura, a contagem será rejeitada e será

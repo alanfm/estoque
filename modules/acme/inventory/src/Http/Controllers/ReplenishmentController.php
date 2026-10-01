@@ -18,7 +18,7 @@ final class ReplenishmentController
 
     public function configure(Request $request, InventoryItem $item, ConfigureReplenishmentAction $action)
     {
-        abort_unless($request->user()?->hasPermission('inventory.items.configureReplenishment'), 403);
+        abort_unless($request->user()?->can('inventory.items.configureReplenishment'), 403);
         $data = $request->validate([
             'version' => ['required', 'integer', 'min:1'],
             'minimumStock' => ['present', 'nullable', 'integer', 'min:0'],

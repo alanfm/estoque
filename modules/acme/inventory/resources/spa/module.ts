@@ -3,6 +3,7 @@ import type { FrontendModule } from "@starterkit/module-kit";
 const module: FrontendModule = {
   name: "inventory",
   displayName: "Almoxarifado de TI",
+  navigationGroup: { icon: "Boxes", order: 60 },
   routes: [
     {
       path: "admin/inventory",
@@ -73,20 +74,6 @@ const module: FrontendModule = {
   ],
   navigation: [
     {
-      to: "/admin/inventory",
-      label: "Almoxarifado",
-      icon: "Boxes",
-      permission: "inventory.items.viewAny",
-      order: 60,
-    },
-    {
-      to: "/admin/inventory/categories",
-      label: "Categorias",
-      icon: "Tags",
-      permission: "inventory.categories.viewAny",
-      order: 61,
-    },
-    {
       to: "/admin/inventory/dashboard",
       label: "Painel",
       icon: "FileText",
@@ -94,32 +81,40 @@ const module: FrontendModule = {
       order: 60,
     },
     {
-      to: "/admin/inventory/reports",
-      label: "Relatórios",
-      icon: "FileText",
-      permission: "inventory.reports.view",
-      order: 64,
-    },
-    {
-      to: "/admin/inventory/imports",
-      label: "Importação",
-      icon: "FileText",
-      permission: "inventory.imports.view",
-      order: 65,
-    },
-    {
       to: "/admin/inventory/movements",
       label: "Movimentações",
       icon: "ArrowLeftRight",
       permission: "inventory.movements.viewAny",
-      order: 62,
+      order: 61,
     },
     {
-      to: "/admin/inventory/adjustments/new",
-      label: "Contagem de estoque",
-      icon: "ClipboardCheck",
-      permission: "inventory.adjustments.create",
+      to: "/admin/inventory",
+      label: "Itens",
+      icon: "Boxes",
+      permission: "inventory.items.viewAny",
+      order: 62,
+      end: true,
+    },
+    {
+      to: "/admin/inventory/categories",
+      label: "Categorias",
+      icon: "Tags",
+      permission: "inventory.categories.viewAny",
       order: 63,
+    },
+    {
+      to: "/admin/inventory/reports",
+      label: "Relatórios",
+      icon: "FileText",
+      permission: "inventory.reports.view",
+      order: 65,
+    },
+    {
+      to: "/admin/inventory/imports",
+      label: "Importações",
+      icon: "FileText",
+      permission: "inventory.imports.view",
+      order: 66,
     },
   ],
 };

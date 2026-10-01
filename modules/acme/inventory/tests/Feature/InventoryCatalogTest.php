@@ -19,7 +19,7 @@ final class InventoryCatalogTest extends TestCase
         $this->artisan('inventory:install')->assertSuccessful();
         $this->actingAs($this->userWithPermissions(['inventory.categories.viewAny', 'inventory.categories.create', 'inventory.categories.update', 'inventory.items.viewAny', 'inventory.items.view', 'inventory.items.create', 'inventory.items.update', 'inventory.variants.create', 'inventory.variants.update']));
 
-        $category = $this->postJson('/api/v1/inventory/categories', ['name' => '  Memória  '])->assertCreated()->assertJsonPath('data.name', 'Memória');
+        $category = $this->postJson('/api/v1/inventory/categories', ['name' => '  Memória  ', 'observations' => ' Categoria de componentes. '])->assertCreated()->assertJsonPath('data.name', 'Memória')->assertJsonPath('data.observations', 'Categoria de componentes.');
         $this->postJson('/api/v1/inventory/categories', ['name' => 'memória'])->assertUnprocessable();
         $item = $this->postJson('/api/v1/inventory/items', ['code' => 'mem01', 'categoryId' => $category->json('data.id'), 'name' => 'Memória RAM', 'unit' => 'UN'])->assertCreated()->assertJsonPath('data.code', 'MEM01');
         $itemId = $item->json('data.id');
@@ -39,7 +39,10 @@ final class InventoryCatalogTest extends TestCase
 
         $categoryId = DB::table('inventory_categories')->insertGetId(['name' => 'Rede', 'normalized_name' => 'rede', 'active' => true, 'version' => 1, 'created_at' => now(), 'updated_at' => now()]);
         $this->actingAs($this->userWithPermissions(['inventory.categories.update']))
-            ->patchJson("/api/v1/inventory/categories/{$categoryId}", ['name' => 'Redes', 'active' => true, 'version' => 99])
+            ->patchJson("/api/v1/inventory/categories/{$categoryId}", ['name' => 'Redes', 'observations' => 'Acessórios de rede.', 'active' => true, 'version' => 1])
+            ->assertOk()->assertJsonPath('data.observations', 'Acessórios de rede.');
+
+        $this->patchJson("/api/v1/inventory/categories/{$categoryId}", ['name' => 'Redes', 'active' => true, 'version' => 99])
             ->assertStatus(409);
     }
 

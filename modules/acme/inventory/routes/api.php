@@ -28,6 +28,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/movements/{movement}', [MovementController::class, 'show']);
     Route::patch('/movements/{movement}', [MovementController::class, 'update']);
     Route::post('/movements/{movement}/cancel', [MovementController::class, 'cancel']);
+    Route::post('/movements/{movement}/post', [MovementController::class, 'post']);
     Route::post('/adjustments', [InventoryCorrectionController::class, 'adjust']);
     Route::post('/movements/{movement}/reverse', [InventoryCorrectionController::class, 'reverse']);
     Route::get('/imports', [InventoryImportController::class, 'index']);

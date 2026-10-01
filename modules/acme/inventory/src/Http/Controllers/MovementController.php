@@ -3,6 +3,7 @@
 namespace Acme\Inventory\Http\Controllers;
 
 use Acme\Inventory\Application\Actions\ExecuteIdempotentOperation;
+use Acme\Inventory\Application\Actions\PostMovementAction;
 use Acme\Inventory\Application\Actions\SaveMovementDraftAction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -70,7 +71,22 @@ final class MovementController
         $user = $request->user();
         $this->authorizeDraftOwner($request, $row);
 
-        return response()->json(['data' => $action->cancel($movement, (int) $user->getAuthIdentifier(), (bool) $user->hasPermission('inventory.movements.manageDrafts'))]);
+        return response()->json(['data' => $action->cancel($movement, (int) $user->getAuthIdentifier(), (bool) $user->can('inventory.movements.manageDrafts'))]);
+    }
+
+    public function post(Request $request, int $movement, PostMovementAction $action)
+    {
+        $row = DB::table('inventory_movements')->where('id', $movement)->first();
+        abort_if($row === null, 404);
+        $this->authorize($request, $this->permissionForType((string) $row->type));
+        $this->authorizeDraftOwner($request, $row);
+        $data = $request->validate(['version' => ['required', 'integer', 'min:1']]);
+        $key = (string) $request->header('Idempotency-Key');
+        if ($key === '' || mb_strlen($key) > 160) {
+            throw ValidationException::withMessages(['idempotencyKey' => 'O header Idempotency-Key deve conter de 1 a 160 caracteres.']);
+        }
+
+        return response()->json(['data' => $action->execute($movement, (int) $request->user()->getAuthIdentifier(), (int) $data['version'], $key)]);
     }
 
     /** @return array<string, mixed> */
@@ -118,11 +134,11 @@ final class MovementController
 
     private function authorize(Request $request, string $permission): void
     {
-        abort_unless($request->user()?->hasPermission($permission), 403);
+        abort_unless($request->user()?->can($permission), 403);
     }
 
     private function authorizeDraftOwner(Request $request, object $movement): void
     {
-        abort_unless((int) $movement->created_by === (int) $request->user()->getAuthIdentifier() || $request->user()->hasPermission('inventory.movements.manageDrafts'), 403);
+        abort_unless((int) $movement->created_by === (int) $request->user()->getAuthIdentifier() || $request->user()->can('inventory.movements.manageDrafts'), 403);
     }
 }

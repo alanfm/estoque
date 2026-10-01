@@ -1,9 +1,15 @@
-import { Pencil, Power, Tags } from "lucide-react";
+import { Pencil, Plus, Power, Tags } from "lucide-react";
 import { useCallback, useState } from "react";
 import {
   Alert,
   Badge,
   Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   EmptyState,
   ErrorState,
   Field,
@@ -11,6 +17,7 @@ import {
   PageHeader,
   SimpleTooltip,
   Spinner,
+  Textarea,
   Table,
   TableBody,
   TableCell,
@@ -34,7 +41,9 @@ export default function CategoriesPage() {
   );
   const { data, loading, error, reload } = useAsync(loader);
   const [name, setName] = useState("");
+  const [observations, setObservations] = useState("");
   const [editing, setEditing] = useState<Category | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -44,12 +53,16 @@ export default function CategoriesPage() {
     setMessage("");
     try {
       if (editing) {
-        await catalogService.updateCategory(editing, name, editing.active);
+        await catalogService.updateCategory(
+          editing,
+          name,
+          observations,
+          editing.active,
+        );
       } else {
-        await catalogService.createCategory(name);
+        await catalogService.createCategory(name, observations);
       }
-      setName("");
-      setEditing(null);
+      closeForm();
       reload();
     } catch (caught) {
       setMessage(
@@ -62,12 +75,37 @@ export default function CategoriesPage() {
     }
   }
 
+  function closeForm() {
+    setFormOpen(false);
+    setEditing(null);
+    setName("");
+    setObservations("");
+    setMessage("");
+  }
+
+  function openCreateForm() {
+    setEditing(null);
+    setName("");
+    setObservations("");
+    setMessage("");
+    setFormOpen(true);
+  }
+
+  function openEditForm(category: Category) {
+    setEditing(category);
+    setName(category.name);
+    setObservations(category.observations ?? "");
+    setMessage("");
+    setFormOpen(true);
+  }
+
   async function toggle(category: Category) {
     setMessage("");
     try {
       await catalogService.updateCategory(
         category,
         category.name,
+        category.observations ?? "",
         !category.active,
       );
       reload();
@@ -89,39 +127,62 @@ export default function CategoriesPage() {
           { label: "Almoxarifado", to: "/admin/inventory" },
           { label: "Categorias" },
         ]}
+        actions={
+          canCreate ? (
+            <Button onClick={openCreateForm}>
+              <Plus className="size-4" aria-hidden="true" />
+              Nova categoria
+            </Button>
+          ) : null
+        }
       />
       {message ? <Alert variant="danger">{message}</Alert> : null}
-      {canCreate || editing ? (
-        <form
-          className="flex max-w-xl items-end gap-3"
-          onSubmit={(event) => void submit(event)}
-        >
-          <Field id="category-name" label="Nome da categoria" required>
-            <Input
-              id="category-name"
-              maxLength={120}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              required
-            />
-          </Field>
-          <Button type="submit" loading={saving}>
-            {editing ? "Salvar" : "Adicionar"}
-          </Button>
-          {editing ? (
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setEditing(null);
-                setName("");
-              }}
-            >
-              Cancelar
-            </Button>
-          ) : null}
-        </form>
-      ) : null}
+      <Dialog
+        open={formOpen}
+        onOpenChange={(open) => {
+          if (open) setFormOpen(true);
+          else closeForm();
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editing ? "Editar categoria" : "Nova categoria"}
+            </DialogTitle>
+            <DialogDescription>
+              Informe o nome e, se necessário, observações para esta categoria.
+            </DialogDescription>
+          </DialogHeader>
+          <form className="space-y-4" onSubmit={(event) => void submit(event)}>
+            <Field id="category-name" label="Nome da categoria" required>
+              <Input
+                id="category-name"
+                maxLength={120}
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                required
+              />
+            </Field>
+            <Field id="category-observations" label="Observações">
+              <Textarea
+                id="category-observations"
+                maxLength={5000}
+                value={observations}
+                onChange={(event) => setObservations(event.target.value)}
+              />
+            </Field>
+            {message ? <Alert variant="danger">{message}</Alert> : null}
+            <DialogFooter>
+              <Button type="button" variant="secondary" onClick={closeForm}>
+                Cancelar
+              </Button>
+              <Button type="submit" loading={saving}>
+                {editing ? "Salvar alterações" : "Cadastrar categoria"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
       {loading && !data ? (
         <div className="flex justify-center p-10">
           <Spinner label="Carregando categorias" />
@@ -166,8 +227,7 @@ export default function CategoriesPage() {
                             size="iconCompact"
                             aria-label={`Editar ${category.name}`}
                             onClick={() => {
-                              setEditing(category);
-                              setName(category.name);
+                              openEditForm(category);
                             }}
                           >
                             <Pencil className="size-4" aria-hidden="true" />

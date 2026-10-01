@@ -7,6 +7,7 @@ import {
 export interface Category {
   id: string;
   name: string;
+  observations: string | null;
   active: boolean;
   version: number;
 }
@@ -84,19 +85,32 @@ export const catalogService = {
       signal,
     });
   },
-  async createCategory(name: string) {
+  async createCategory(name: string, observations: string) {
     return (
       await apiRequest<ApiResource<Category>>("/inventory/categories", {
         method: "POST",
-        body: { name },
+        body: { name, observations: observations || null },
       })
     ).data;
   },
-  async updateCategory(category: Category, name: string, active: boolean) {
+  async updateCategory(
+    category: Category,
+    name: string,
+    observations: string,
+    active: boolean,
+  ) {
     return (
       await apiRequest<ApiResource<Category>>(
         `/inventory/categories/${category.id}`,
-        { method: "PATCH", body: { name, active, version: category.version } },
+        {
+          method: "PATCH",
+          body: {
+            name,
+            observations: observations || null,
+            active,
+            version: category.version,
+          },
+        },
       )
     ).data;
   },

@@ -1,6 +1,7 @@
 import {
   apiRequest,
   type ApiResource,
+  type PaginationMeta,
   type Paginated,
 } from "@starterkit/module-kit";
 
@@ -14,7 +15,7 @@ export interface ImportBatch {
 
 export const importService = {
   list(signal?: AbortSignal) {
-    return apiRequest<Paginated<ImportBatch>>("/inventory/imports", { signal });
+    return apiRequest<ImportBatchList>("/inventory/imports", { signal });
   },
   async analyze(file: File) {
     const body = new FormData();
@@ -65,4 +66,17 @@ export interface ImportRow {
   source_payload: Record<string, unknown>;
   corrected_payload: Record<string, unknown> | null;
   errors: string[] | null;
+}
+
+export interface ImportBatchList {
+  data: {
+    data: ImportBatch[];
+    links: {
+      first: string | null;
+      last: string | null;
+      prev: string | null;
+      next: string | null;
+    };
+    meta: PaginationMeta;
+  };
 }

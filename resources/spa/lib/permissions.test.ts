@@ -8,6 +8,7 @@ const user: SessionUser = {
   email: "ana@example.com",
   roles: ["admin"],
   permissions: ["users.viewAny", "users.create"],
+  isSuperAdmin: false,
 };
 
 describe("helpers de permissão", () => {
@@ -18,6 +19,19 @@ describe("helpers de permissão", () => {
 
   test("can retorna falso sem usuário", () => {
     expect(can(null, "users.viewAny")).toBe(false);
+  });
+
+  test("superadministrador permite permissões independentemente do catálogo", () => {
+    const superAdmin: SessionUser = {
+      ...user,
+      roles: ["super-admin"],
+      permissions: [],
+      isSuperAdmin: true,
+    };
+
+    expect(can(superAdmin, "inventory.imports.execute")).toBe(true);
+    expect(canAny(superAdmin, ["not.in.catalog"])).toBe(true);
+    expect(canAll(superAdmin, ["one", "two"])).toBe(true);
   });
 
   test("canAny aceita ao menos uma permissão", () => {

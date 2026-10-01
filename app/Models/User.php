@@ -28,6 +28,10 @@ final class User extends Authenticatable
 
     public function hasPermission(string $name): bool
     {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
         return Permission::query()
             ->where('name', $name)
             ->whereNull('obsolete_at')

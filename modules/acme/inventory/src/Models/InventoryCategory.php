@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * @property int $id
  * @property string $name
+ * @property string|null $observations
  * @property string $normalized_name
  * @property bool $active
  * @property int $version
@@ -20,7 +21,7 @@ final class InventoryCategory extends Model
 
     protected $table = 'inventory_categories';
 
-    protected $fillable = ['name', 'normalized_name', 'active', 'version'];
+    protected $fillable = ['name', 'observations', 'normalized_name', 'active', 'version'];
 
     protected static function newFactory(): InventoryCategoryFactory
     {

@@ -5,12 +5,17 @@ import {
   Settings,
   ShoppingCart,
   Tags,
+  ArrowLeftRight,
+  ClipboardCheck,
+  FolderKanban,
   Users,
   type LucideIcon,
 } from "lucide-react";
 
 const icons: Record<string, LucideIcon> = {
   Boxes,
+  ArrowLeftRight,
+  ClipboardCheck,
   FileText,
   Package,
   Settings,
@@ -18,6 +23,11 @@ const icons: Record<string, LucideIcon> = {
   Tags,
   Users,
 };
+
+/** Resolve ícones públicos para grupos de navegação de módulos. */
+export function resolveModuleGroupIcon(name?: string): LucideIcon {
+  return resolveModuleIcon(name) ?? FolderKanban;
+}
 
 /**
  * Resolve o ícone público de um item de navegação de módulo.

@@ -3,6 +3,8 @@ import { useNavigate } from "react-router";
 import { Button } from "../../../../../../resources/spa/components/actions/Button";
 import { Field } from "../../../../../../resources/spa/components/forms/Field";
 import { Input } from "../../../../../../resources/spa/components/forms/Input";
+import { Select } from "../../../../../../resources/spa/components/forms/Select";
+import { Textarea } from "../../../../../../resources/spa/components/forms/Textarea";
 import { PageHeader } from "../../../../../../resources/spa/components/navigation/PageHeader";
 import { useAsync } from "../../../../../../resources/spa/hooks/useAsync";
 import { catalogService } from "../services/catalogService";
@@ -67,13 +69,7 @@ export default function ItemCreatePage() {
           <Input id="item-name" name="name" maxLength={200} required />
         </Field>
         <Field id="item-category" label="Categoria" required>
-          <select
-            id="item-category"
-            name="categoryId"
-            className="w-full rounded border p-2"
-            required
-            defaultValue=""
-          >
+          <Select id="item-category" name="categoryId" required defaultValue="">
             <option value="" disabled>
               Selecione
             </option>
@@ -84,26 +80,17 @@ export default function ItemCreatePage() {
                   {category.name}
                 </option>
               ))}
-          </select>
+          </Select>
         </Field>
         <Field id="item-unit" label="Unidade" required>
-          <select
-            id="item-unit"
-            name="unit"
-            className="w-full rounded border p-2"
-          >
+          <Select id="item-unit" name="unit">
             <option value="UN">Unidade</option>
             <option value="PAR">Par</option>
             <option value="CX">Caixa</option>
-          </select>
+          </Select>
         </Field>
         <Field id="item-description" label="Descrição">
-          <textarea
-            id="item-description"
-            name="description"
-            maxLength={5000}
-            className="w-full rounded border p-2"
-          />
+          <Textarea id="item-description" name="description" maxLength={5000} />
         </Field>
         <Button type="submit" loading={saving}>
           Criar item

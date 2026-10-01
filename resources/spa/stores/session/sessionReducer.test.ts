@@ -7,6 +7,7 @@ const user = {
   email: "ana@example.com",
   roles: ["admin"],
   permissions: ["users.viewAny"],
+  isSuperAdmin: false,
 };
 
 describe("sessionReducer", () => {

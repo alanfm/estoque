@@ -15,6 +15,7 @@ final class AuthenticatedUserResource extends JsonResource
             'name' => $this->resource->name,
             'email' => $this->resource->email,
             'roles' => $this->resource->roles->pluck('slug')->all(),
+            'isSuperAdmin' => $this->resource->isSuperAdmin(),
             'permissions' => $this->resource->permissionNames(),
         ];
     }

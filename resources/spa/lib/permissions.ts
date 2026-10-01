@@ -1,7 +1,10 @@
 import type { SessionUser } from "../types/auth";
 
 export function can(user: SessionUser | null, permission: string): boolean {
-  return user?.permissions.includes(permission) ?? false;
+  return (
+    user?.isSuperAdmin === true ||
+    (user?.permissions.includes(permission) ?? false)
+  );
 }
 
 export function canAny(

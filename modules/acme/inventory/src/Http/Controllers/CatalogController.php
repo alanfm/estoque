@@ -28,7 +28,8 @@ final class CatalogController
     {
         $this->authorize($request, 'create', InventoryCategory::class);
         $request->merge(['normalized_name' => mb_strtolower(trim((string) $request->input('name')))]);
-        $data = $request->validate(['name' => ['required', 'string', 'min:1', 'max:120'], 'normalized_name' => ['required', 'unique:inventory_categories,normalized_name']]);
+        $data = $request->validate(['name' => ['required', 'string', 'min:1', 'max:120'], 'observations' => ['nullable', 'string', 'max:5000'], 'normalized_name' => ['required', 'unique:inventory_categories,normalized_name']]);
+        $data['name'] = trim($data['name']);
 
         return new CategoryResource($action->createCategory($data));
     }
@@ -37,7 +38,8 @@ final class CatalogController
     {
         $this->authorize($request, 'update', $category);
         $request->merge(['normalized_name' => mb_strtolower(trim((string) $request->input('name')))]);
-        $data = $request->validate(['name' => ['required', 'string', 'min:1', 'max:120'], 'active' => ['required', 'boolean'], 'version' => ['required', 'integer', 'min:1'], 'normalized_name' => ['required', Rule::unique('inventory_categories')->ignore($category->id)]]);
+        $data = $request->validate(['name' => ['required', 'string', 'min:1', 'max:120'], 'observations' => ['nullable', 'string', 'max:5000'], 'active' => ['required', 'boolean'], 'version' => ['required', 'integer', 'min:1'], 'normalized_name' => ['required', Rule::unique('inventory_categories')->ignore($category->id)]]);
+        $data['name'] = trim($data['name']);
 
         return new CategoryResource($action->updateCategory($category, $data));
     }

@@ -30,7 +30,16 @@ export default defineConfig(({ mode }) => {
         ),
       },
     },
-    server: { host: "0.0.0.0", hmr: { host: "localhost" } },
+    server: {
+      host: "0.0.0.0",
+      port: Number(env.VITE_PORT || 5173),
+      strictPort: true,
+      watch: { usePolling: true, interval: 500 },
+      hmr: {
+        host: env.VITE_HMR_HOST || "localhost",
+        clientPort: Number(env.VITE_PORT || 5173),
+      },
+    },
     test: {
       environment: "jsdom",
       globals: true,

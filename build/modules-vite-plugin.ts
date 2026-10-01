@@ -182,17 +182,23 @@ export function modulesPlugin(options: ModulesPluginOptions = {}): Plugin {
       const manifestGlobs = (roots ?? []).map(
         (root) => `${root}/*/*/module.json`,
       );
+      const frontendGlobs = (roots ?? []).map(
+        (root) => `${root}/*/*/resources/spa/**/*`,
+      );
 
       server.watcher.add(
-        [...manifestGlobs, statePath].filter((path): path is string =>
-          Boolean(path),
+        [...manifestGlobs, ...frontendGlobs, statePath].filter(
+          (path): path is string => Boolean(path),
         ),
       );
     },
     handleHotUpdate(context) {
       const isManifest = /module\.json$/.test(context.file);
+      const isModuleFrontend = (roots ?? []).some((root) =>
+        context.file.startsWith(resolve(root) + "/"),
+      );
 
-      if (!isManifest && context.file !== statePath) {
+      if (!isManifest && context.file !== statePath && !isModuleFrontend) {
         return undefined;
       }
 

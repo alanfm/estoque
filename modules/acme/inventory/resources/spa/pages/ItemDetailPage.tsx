@@ -1,10 +1,16 @@
-import { Boxes, Power } from "lucide-react";
+import { Boxes, Pencil, Plus, Power, Settings } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useParams } from "react-router";
 import {
   Alert,
   Badge,
   Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   EmptyState,
   ErrorState,
   Field,
@@ -20,6 +26,7 @@ import {
   TableHeader,
   TableRow,
   TableWrapper,
+  Textarea,
   can,
   useAsync,
   useSession,
@@ -33,6 +40,10 @@ import {
 export default function ItemDetailPage() {
   const { state } = useSession();
   const canEditItem = can(state.user, "inventory.items.update");
+  const canConfigureReplenishment = can(
+    state.user,
+    "inventory.items.configureReplenishment",
+  );
   const canCreateVariant = can(state.user, "inventory.variants.create");
   const canUpdateVariant = can(state.user, "inventory.variants.update");
   const { id = "" } = useParams();
@@ -59,6 +70,9 @@ export default function ItemDetailPage() {
   } = useAsync<ReplenishmentRecommendation>(replenishmentLoader);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+  const [itemFormOpen, setItemFormOpen] = useState(false);
+  const [variantFormOpen, setVariantFormOpen] = useState(false);
+  const [replenishmentFormOpen, setReplenishmentFormOpen] = useState(false);
   async function saveItem(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!item) return;
@@ -74,6 +88,7 @@ export default function ItemDetailPage() {
         unit: String(form.get("unit")),
         active: form.get("active") === "on",
       });
+      setItemFormOpen(false);
       reload();
     } catch (caught) {
       setMessage(
@@ -96,7 +111,7 @@ export default function ItemDetailPage() {
         model: String(form.get("model")) || null,
         description: String(form.get("variantDescription")),
       });
-      event.currentTarget.reset();
+      setVariantFormOpen(false);
       reload();
     } catch (caught) {
       setMessage(
@@ -137,6 +152,7 @@ export default function ItemDetailPage() {
         safetyStock: numberOrNull("safetyStock"),
         recommendationWindowDays: Number(form.get("recommendationWindowDays")),
       });
+      setReplenishmentFormOpen(false);
       reload();
       reloadReplenishment();
     } catch (caught) {
@@ -168,20 +184,79 @@ export default function ItemDetailPage() {
           { label: "Almoxarifado", to: "/admin/inventory" },
           { label: item.code },
         ]}
+        actions={
+          canEditItem ? (
+            <Button
+              onClick={() => {
+                setMessage("");
+                setItemFormOpen(true);
+              }}
+            >
+              <Pencil className="size-4" aria-hidden="true" />
+              Editar item
+            </Button>
+          ) : null
+        }
       />
       {message ? <Alert variant="danger">{message}</Alert> : null}
       <section
         className="space-y-4 rounded border p-4"
+        aria-labelledby="item-data-title"
+      >
+        <h2 id="item-data-title" className="text-h3">
+          Dados do item
+        </h2>
+        <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <dt className="font-medium">Código</dt>
+            <dd>{item.code}</dd>
+          </div>
+          <div>
+            <dt className="font-medium">Categoria</dt>
+            <dd>{item.category?.name ?? "—"}</dd>
+          </div>
+          <div>
+            <dt className="font-medium">Unidade</dt>
+            <dd>{item.unit}</dd>
+          </div>
+          <div>
+            <dt className="font-medium">Estado</dt>
+            <dd>{item.active ? "Ativo" : "Inativo"}</dd>
+          </div>
+          <div className="sm:col-span-2 lg:col-span-4">
+            <dt className="font-medium">Descrição</dt>
+            <dd className="whitespace-pre-wrap text-ink-secondary">
+              {item.description || "—"}
+            </dd>
+          </div>
+        </dl>
+      </section>
+      <section
+        className="space-y-4 rounded border p-4"
         aria-labelledby="replenishment-title"
       >
-        <div>
-          <h2 id="replenishment-title" className="text-xl font-semibold">
-            Reposição
-          </h2>
-          <p className="text-sm">
-            Sugestão calculada sobre dias completos; o mínimo efetivo não é
-            alterado automaticamente.
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 id="replenishment-title" className="text-xl font-semibold">
+              Reposição
+            </h2>
+            <p className="text-sm">
+              Sugestão calculada sobre dias completos; o mínimo efetivo não é
+              alterado automaticamente.
+            </p>
+          </div>
+          {canConfigureReplenishment ? (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setMessage("");
+                setReplenishmentFormOpen(true);
+              }}
+            >
+              <Settings className="size-4" aria-hidden="true" />
+              Configurar reposição
+            </Button>
+          ) : null}
         </div>
         {replenishmentLoading && !recommendation ? (
           <p role="status">Calculando recomendação…</p>
@@ -250,127 +325,22 @@ export default function ItemDetailPage() {
             </div>
           </dl>
         )}
-        {can(state.user, "inventory.items.configureReplenishment") && (
-          <form
-            className="grid gap-4 border-t pt-4 sm:grid-cols-2 lg:grid-cols-5"
-            onSubmit={(event) => void saveReplenishment(event)}
-          >
-            <Field id="minimum-stock" label="Mínimo efetivo">
-              <Input
-                id="minimum-stock"
-                name="minimumStock"
-                type="number"
-                min="0"
-                defaultValue={item.minimumStock ?? ""}
-              />
-            </Field>
-            <Field id="lead-time" label="Prazo de compra (dias)">
-              <Input
-                id="lead-time"
-                name="purchaseLeadTimeDays"
-                type="number"
-                min="0"
-                defaultValue={item.purchaseLeadTimeDays ?? ""}
-              />
-            </Field>
-            <Field id="safety-stock" label="Estoque de segurança">
-              <Input
-                id="safety-stock"
-                name="safetyStock"
-                type="number"
-                min="0"
-                defaultValue={item.safetyStock ?? ""}
-              />
-            </Field>
-            <Field id="window-days" label="Janela (30–365 dias)">
-              <Input
-                id="window-days"
-                name="recommendationWindowDays"
-                type="number"
-                min="30"
-                max="365"
-                defaultValue={item.recommendationWindowDays}
-                required
-              />
-            </Field>
-            <div className="self-end">
-              <Button type="submit" loading={saving}>
-                Salvar parâmetros
-              </Button>
-            </div>
-          </form>
-        )}
       </section>
-      {canEditItem && (
-        <form
-          className="grid max-w-3xl gap-4 md:grid-cols-2"
-          onSubmit={(event) => void saveItem(event)}
-        >
-          <Field id="edit-code" label="Código" required>
-            <Input
-              id="edit-code"
-              name="code"
-              defaultValue={item.code}
-              required
-              maxLength={32}
-            />
-          </Field>
-          <Field id="edit-name" label="Nome" required>
-            <Input
-              id="edit-name"
-              name="name"
-              defaultValue={item.name}
-              required
-              maxLength={200}
-            />
-          </Field>
-          <Field id="edit-category" label="Categoria" required>
-            <Select
-              id="edit-category"
-              name="categoryId"
-              defaultValue={item.category?.id}
-            >
-              {categories?.data
-                .filter(
-                  (category) =>
-                    category.active || category.id === item.category?.id,
-                )
-                .map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-            </Select>
-          </Field>
-          <Field id="edit-unit" label="Unidade">
-            <Select id="edit-unit" name="unit" defaultValue={item.unit}>
-              <option value="UN">Unidade</option>
-              <option value="PAR">Par</option>
-              <option value="CX">Caixa</option>
-            </Select>
-          </Field>
-          <label className="flex items-center gap-2">
-            <input type="checkbox" name="active" defaultChecked={item.active} />
-            Ativo
-          </label>
-          <Field id="edit-description" label="Descrição">
-            <textarea
-              id="edit-description"
-              name="description"
-              defaultValue={item.description ?? ""}
-              maxLength={5000}
-              className="w-full rounded border p-2"
-            />
-          </Field>
-          <div>
-            <Button type="submit" loading={saving}>
-              Salvar alterações
-            </Button>
-          </div>
-        </form>
-      )}
       <section className="space-y-4">
-        <h2 className="text-h3">Variantes de produto</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-h3">Variantes de produto</h2>
+          {canCreateVariant ? (
+            <Button
+              onClick={() => {
+                setMessage("");
+                setVariantFormOpen(true);
+              }}
+            >
+              <Plus className="size-4" aria-hidden="true" />
+              Nova variante
+            </Button>
+          ) : null}
+        </div>
         {item.variants.length === 0 ? (
           <EmptyState
             icon={Boxes}
@@ -439,33 +409,230 @@ export default function ItemDetailPage() {
             </Table>
           </TableWrapper>
         )}
-        {canCreateVariant && (
+      </section>
+
+      <Dialog
+        open={itemFormOpen}
+        onOpenChange={(open) => {
+          setItemFormOpen(open);
+          if (!open) setMessage("");
+        }}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar item</DialogTitle>
+            <DialogDescription>
+              Atualize os dados cadastrais e o estado do item.
+            </DialogDescription>
+          </DialogHeader>
           <form
-            className="grid max-w-3xl gap-4 md:grid-cols-3"
-            onSubmit={(event) => void createVariant(event)}
+            className="grid gap-4 md:grid-cols-2"
+            onSubmit={(event) => void saveItem(event)}
           >
-            <Field id="variant-brand" label="Marca">
-              <Input id="variant-brand" name="brand" maxLength={120} />
-            </Field>
-            <Field id="variant-model" label="Modelo">
-              <Input id="variant-model" name="model" maxLength={120} />
-            </Field>
-            <Field id="variant-description" label="Descrição" required>
+            <Field id="edit-code" label="Código" required>
               <Input
-                id="variant-description"
-                name="variantDescription"
+                name="code"
+                defaultValue={item.code}
                 required
-                maxLength={2000}
+                maxLength={32}
               />
             </Field>
-            <div>
+            <Field id="edit-name" label="Nome" required>
+              <Input
+                name="name"
+                defaultValue={item.name}
+                required
+                maxLength={200}
+              />
+            </Field>
+            <Field id="edit-category" label="Categoria" required>
+              <Select name="categoryId" defaultValue={item.category?.id}>
+                {categories?.data
+                  .filter(
+                    (category) =>
+                      category.active || category.id === item.category?.id,
+                  )
+                  .map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+              </Select>
+            </Field>
+            <Field id="edit-unit" label="Unidade">
+              <Select name="unit" defaultValue={item.unit}>
+                <option value="UN">Unidade</option>
+                <option value="PAR">Par</option>
+                <option value="CX">Caixa</option>
+              </Select>
+            </Field>
+            <label className="flex items-center gap-2 md:col-span-2">
+              <input
+                type="checkbox"
+                name="active"
+                defaultChecked={item.active}
+              />
+              Item ativo
+            </label>
+            <Field
+              id="edit-description"
+              label="Descrição"
+              className="md:col-span-2"
+            >
+              <Textarea
+                name="description"
+                defaultValue={item.description ?? ""}
+                maxLength={5000}
+              />
+            </Field>
+            {message ? (
+              <div className="md:col-span-2">
+                <Alert variant="danger">{message}</Alert>
+              </div>
+            ) : null}
+            <DialogFooter className="md:col-span-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setItemFormOpen(false);
+                  setMessage("");
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" loading={saving}>
+                Salvar alterações
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={replenishmentFormOpen}
+        onOpenChange={(open) => {
+          setReplenishmentFormOpen(open);
+          if (!open) setMessage("");
+        }}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Configurar reposição</DialogTitle>
+            <DialogDescription>
+              Defina o limite efetivo e os parâmetros usados no cálculo da
+              recomendação.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="grid gap-4 sm:grid-cols-2"
+            onSubmit={(event) => void saveReplenishment(event)}
+          >
+            <Field id="minimum-stock" label="Mínimo efetivo">
+              <Input
+                name="minimumStock"
+                type="number"
+                min="0"
+                defaultValue={item.minimumStock ?? ""}
+              />
+            </Field>
+            <Field id="lead-time" label="Prazo de compra (dias)">
+              <Input
+                name="purchaseLeadTimeDays"
+                type="number"
+                min="0"
+                defaultValue={item.purchaseLeadTimeDays ?? ""}
+              />
+            </Field>
+            <Field id="safety-stock" label="Estoque de segurança">
+              <Input
+                name="safetyStock"
+                type="number"
+                min="0"
+                defaultValue={item.safetyStock ?? ""}
+              />
+            </Field>
+            <Field id="window-days" label="Janela (30–365 dias)" required>
+              <Input
+                name="recommendationWindowDays"
+                type="number"
+                min="30"
+                max="365"
+                defaultValue={item.recommendationWindowDays}
+              />
+            </Field>
+            {message ? (
+              <div className="sm:col-span-2">
+                <Alert variant="danger">{message}</Alert>
+              </div>
+            ) : null}
+            <DialogFooter className="sm:col-span-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setReplenishmentFormOpen(false);
+                  setMessage("");
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" loading={saving}>
+                Salvar parâmetros
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={variantFormOpen}
+        onOpenChange={(open) => {
+          setVariantFormOpen(open);
+          if (!open) setMessage("");
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nova variante</DialogTitle>
+            <DialogDescription>
+              Cadastre a marca, o modelo e a descrição do produto físico.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="space-y-4"
+            onSubmit={(event) => void createVariant(event)}
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field id="variant-brand" label="Marca">
+                <Input name="brand" maxLength={120} />
+              </Field>
+              <Field id="variant-model" label="Modelo">
+                <Input name="model" maxLength={120} />
+              </Field>
+            </div>
+            <Field id="variant-description" label="Descrição" required>
+              <Textarea name="variantDescription" required maxLength={2000} />
+            </Field>
+            {message ? <Alert variant="danger">{message}</Alert> : null}
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setVariantFormOpen(false);
+                  setMessage("");
+                }}
+              >
+                Cancelar
+              </Button>
               <Button type="submit" loading={saving}>
                 Adicionar variante
               </Button>
-            </div>
+            </DialogFooter>
           </form>
-        )}
-      </section>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

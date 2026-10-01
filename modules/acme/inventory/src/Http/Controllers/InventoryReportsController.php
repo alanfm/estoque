@@ -79,6 +79,6 @@ final class InventoryReportsController
 
     private function authorize(Request $request, string $permission): void
     {
-        abort_unless($request->user()?->hasPermission($permission), 403);
+        abort_unless($request->user()?->can($permission), 403);
     }
 }

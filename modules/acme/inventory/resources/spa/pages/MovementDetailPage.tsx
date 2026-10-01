@@ -1,12 +1,21 @@
-import { List } from "lucide-react";
+import { List, Pencil } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Link, useParams } from "react-router";
 import {
   Alert,
   Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   EmptyState,
   ErrorState,
+  Field,
+  Input,
   PageHeader,
+  Select,
   Spinner,
   Table,
   TableBody,
@@ -15,11 +24,13 @@ import {
   TableHeader,
   TableRow,
   TableWrapper,
+  Textarea,
   can,
   useAsync,
   useSession,
 } from "@starterkit/module-kit";
 import { labeled, unitLabels } from "../labels";
+import { catalogService } from "../services/catalogService";
 import { movementService } from "../services/movementService";
 
 export default function MovementDetailPage() {
@@ -31,9 +42,15 @@ export default function MovementDetailPage() {
     [id],
   );
   const { data: movement, loading, error, reload } = useAsync(loader);
+  const catalogLoader = useCallback(
+    (signal: AbortSignal) => catalogService.items("", 1, "", signal, 100),
+    [],
+  );
+  const { data: catalog } = useAsync(catalogLoader);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [reason, setReason] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
   async function cancel() {
     if (!movement) return;
     setBusy(true);
@@ -46,6 +63,77 @@ export default function MovementDetailPage() {
         caught instanceof Error
           ? caught.message
           : "Não foi possível descartar o rascunho.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function post() {
+    if (!movement) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      await movementService.post(movement.id, movement.version);
+      reload();
+    } catch (caught) {
+      setMessage(
+        caught instanceof Error
+          ? caught.message
+          : "Não foi possível confirmar o movimento.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function updateDraft(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!movement) return;
+    const form = new FormData(event.currentTarget);
+    setBusy(true);
+    setMessage("");
+    try {
+      await movementService.updateDraft(movement.id, movement.version, {
+        occurredOn: String(form.get("occurredOn")) || null,
+        origin:
+          movement.type === "ENTRY" ? String(form.get("origin")) : undefined,
+        documentNumber:
+          movement.type === "ENTRY"
+            ? String(form.get("documentNumber")) || null
+            : undefined,
+        description:
+          movement.type === "ISSUE"
+            ? String(form.get("description")) || null
+            : undefined,
+        serviceOrderNumber:
+          movement.type === "ISSUE"
+            ? String(form.get("serviceOrderNumber")) || null
+            : undefined,
+        observations: String(form.get("observations")) || null,
+        lines: movement.lines.map((line, index) =>
+          index === 0
+            ? {
+                variantId: String(form.get("variantId")),
+                quantity: Number(form.get("quantity")),
+                ...(movement.type === "ENTRY" && form.get("unitCost")
+                  ? { unitCost: String(form.get("unitCost")) }
+                  : {}),
+              }
+            : {
+                variantId: String(line.variant_id),
+                quantity: Number(line.quantity ?? 0),
+                ...(movement.type === "ENTRY" && line.unit_cost
+                  ? { unitCost: line.unit_cost }
+                  : {}),
+              },
+        ),
+      });
+      setEditOpen(false);
+      reload();
+    } catch (caught) {
+      setMessage(
+        caught instanceof Error
+          ? caught.message
+          : "Não foi possível editar o rascunho.",
       );
     } finally {
       setBusy(false);
@@ -158,15 +246,159 @@ export default function MovementDetailPage() {
       </section>
       {movement.status === "DRAFT" && (
         <div className="flex gap-3">
+          <Button variant="secondary" onClick={() => setEditOpen(true)}>
+            <Pencil className="size-4" aria-hidden="true" />
+            Editar rascunho
+          </Button>
+          <Button loading={busy} onClick={() => void post()}>
+            Confirmar {movement.type === "ENTRY" ? "entrada" : "saída"}
+          </Button>
           <Button variant="danger" loading={busy} onClick={() => void cancel()}>
             Descartar rascunho
           </Button>
-          <span className="self-center text-sm">
-            Confirmação de estoque será habilitada após a validação das regras
-            de concorrência e data.
-          </span>
         </div>
       )}
+      {movement.status === "DRAFT" ? (
+        <Dialog
+          open={editOpen}
+          onOpenChange={(open) => {
+            setEditOpen(open);
+            if (!open) setMessage("");
+          }}
+        >
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Editar rascunho</DialogTitle>
+              <DialogDescription>
+                Atualize os dados antes de confirmar a movimentação.
+              </DialogDescription>
+            </DialogHeader>
+            <form
+              className="grid gap-4 sm:grid-cols-2"
+              onSubmit={(event) => void updateDraft(event)}
+            >
+              <Field id="edit-variant" label="Variante" required>
+                <Select
+                  name="variantId"
+                  defaultValue={String(movement.lines[0]?.variant_id ?? "")}
+                  required
+                >
+                  {catalog?.data.flatMap((item) =>
+                    item.variants
+                      .filter((variant) => variant.active)
+                      .map((variant) => (
+                        <option key={variant.id} value={variant.id}>
+                          {item.code} — {item.name} /{" "}
+                          {[variant.brand, variant.model, variant.description]
+                            .filter(Boolean)
+                            .join(" ")}
+                        </option>
+                      )),
+                  )}
+                </Select>
+              </Field>
+              <Field id="edit-quantity" label="Quantidade" required>
+                <Input
+                  name="quantity"
+                  type="number"
+                  min="1"
+                  step="1"
+                  defaultValue={movement.lines[0]?.quantity ?? ""}
+                  required
+                />
+              </Field>
+              <Field id="edit-occurred-on" label="Data do fato">
+                <Input
+                  name="occurredOn"
+                  type="date"
+                  defaultValue={movement.occurred_on ?? ""}
+                />
+              </Field>
+              {movement.type === "ENTRY" ? (
+                <>
+                  <Field id="edit-origin" label="Origem" required>
+                    <Select
+                      name="origin"
+                      defaultValue={movement.origin ?? "PURCHASE"}
+                    >
+                      <option value="PURCHASE">Compra</option>
+                      <option value="DONATION">Doação</option>
+                      <option value="INITIAL_STOCK">Estoque inicial</option>
+                      <option value="RETURN">Devolução</option>
+                      <option value="TRANSFER_RECEIPT">
+                        Recebimento externo
+                      </option>
+                      <option value="OTHER">Outra</option>
+                    </Select>
+                  </Field>
+                  <Field id="edit-document" label="Documento">
+                    <Input
+                      name="documentNumber"
+                      defaultValue={movement.document_number ?? ""}
+                      maxLength={120}
+                    />
+                  </Field>
+                  <Field id="edit-unit-cost" label="Custo unitário">
+                    <Input
+                      name="unitCost"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      defaultValue={movement.lines[0]?.unit_cost ?? ""}
+                    />
+                  </Field>
+                </>
+              ) : (
+                <>
+                  <Field id="edit-description" label="Finalidade" required>
+                    <Input
+                      name="description"
+                      defaultValue={movement.description ?? ""}
+                      maxLength={5000}
+                      required
+                    />
+                  </Field>
+                  <Field id="edit-service-order" label="Ordem de serviço">
+                    <Input
+                      name="serviceOrderNumber"
+                      defaultValue={movement.service_order_number ?? ""}
+                      maxLength={120}
+                    />
+                  </Field>
+                </>
+              )}
+              <Field
+                id="edit-observations"
+                className="sm:col-span-2"
+                label="Observações"
+              >
+                <Textarea
+                  name="observations"
+                  defaultValue={movement.observations ?? ""}
+                  maxLength={5000}
+                />
+              </Field>
+              {message ? (
+                <div className="sm:col-span-2">
+                  <Alert variant="danger">{message}</Alert>
+                </div>
+              ) : null}
+              <DialogFooter className="sm:col-span-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setEditOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit" loading={busy}>
+                  Salvar rascunho
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      ) : null}
       {canReverse &&
         movement.status === "POSTED" &&
         movement.type !== "REVERSAL" && (
@@ -180,13 +412,12 @@ export default function MovementDetailPage() {
               será recusada se deixar alguma variante com saldo negativo.
             </p>
             <label htmlFor="reverse-reason">Motivo obrigatório</label>
-            <textarea
+            <Textarea
               id="reverse-reason"
               required
               maxLength={5000}
               value={reason}
               onChange={(event) => setReason(event.target.value)}
-              className="w-full rounded border p-2"
             />
             <div>
               <Button type="submit" variant="danger" loading={busy}>

@@ -4,6 +4,7 @@ export interface SessionUser {
   email: string;
   roles: string[];
   permissions: string[];
+  isSuperAdmin: boolean;
 }
 
 export interface User {

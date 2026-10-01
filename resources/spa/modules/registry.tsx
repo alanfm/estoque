@@ -8,6 +8,7 @@ import type {
   ModuleEntry,
   ModuleNavigationItem,
   ModuleRoute,
+  RegisteredModuleNavigationGroup,
   RegisteredModule,
 } from "./types";
 
@@ -28,6 +29,7 @@ export async function createModuleRegistry(
   const modules: RegisteredModule[] = [];
   const routes: ModuleRoute[] = [];
   const navigation: ModuleNavigationItem[] = [];
+  const navigationGroups: RegisteredModuleNavigationGroup[] = [];
   const seen = new Set<string>();
 
   for (const entry of entries) {
@@ -72,8 +74,27 @@ export async function createModuleRegistry(
       continue;
     }
 
+    const sortedModuleNavigation = moduleNavigation
+      .map((item, index) => ({ item, index }))
+      .sort(
+        (left, right) =>
+          (left.item.order ?? 100) - (right.item.order ?? 100) ||
+          left.index - right.index,
+      )
+      .map(({ item }) => item);
+
     routes.push(...moduleRoutes);
-    navigation.push(...moduleNavigation);
+    navigation.push(...sortedModuleNavigation);
+    if (module.navigationGroup) {
+      navigationGroups.push({
+        moduleName: module.name,
+        label: module.displayName ?? module.name,
+        icon: module.navigationGroup.icon,
+        order: module.navigationGroup.order ?? 100,
+        registrationOrder: navigationGroups.length,
+        items: sortedModuleNavigation,
+      });
+    }
     modules.push({
       name: module.name,
       displayName: module.displayName ?? module.name,
@@ -81,8 +102,13 @@ export async function createModuleRegistry(
   }
 
   navigation.sort((left, right) => (left.order ?? 100) - (right.order ?? 100));
+  navigationGroups.sort(
+    (left, right) =>
+      left.order - right.order ||
+      left.registrationOrder - right.registrationOrder,
+  );
 
-  return { modules, routes, navigation, issues };
+  return { modules, routes, navigation, navigationGroups, issues };
 }
 
 /** Converte as rotas dos módulos em objetos do React Router com guards. */

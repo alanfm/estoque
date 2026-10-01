@@ -28,4 +28,43 @@ describe("Button", () => {
       "/destino",
     );
   });
+
+  test("variantes compartilham a anatomia e trocam só os tokens", () => {
+    const { rerender } = render(<Button variant="primary">Ação</Button>);
+    const button = screen.getByRole("button", { name: "Ação" });
+
+    expect(button.className).toContain("h-10");
+    expect(button.className).toContain("rounded-md");
+    expect(button.className).toContain("text-label");
+    expect(button.className).toContain("bg-brand");
+    expect(button.className).toContain("text-brand-foreground");
+
+    rerender(<Button variant="secondary">Ação</Button>);
+    expect(button.className).toContain("bg-surface");
+    expect(button.className).toContain("border-line-strong");
+    expect(button.className).toContain("text-ink");
+
+    rerender(
+      <Button variant="ghost" size="iconCompact">
+        Ação
+      </Button>,
+    );
+    expect(button.className).toContain("bg-transparent");
+    expect(button.className).toContain("border-transparent");
+    expect(button.className).toContain("size-8");
+
+    rerender(<Button variant="danger">Ação</Button>);
+    expect(button.className).toContain("bg-danger");
+    expect(button.className).toContain("text-danger-foreground");
+
+    rerender(
+      <Button variant="link" disabled>
+        Ação
+      </Button>,
+    );
+    expect(button.className).toContain("underline");
+    expect(button.className).toContain("disabled:bg-transparent");
+    expect(button.className).toContain("disabled:no-underline");
+    expect(button).toBeDisabled();
+  });
 });

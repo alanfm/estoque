@@ -25,6 +25,42 @@ describe("createModuleRegistry", () => {
         permission: "contract-sample.viewAny",
       }),
     ]);
+    expect(registry.navigationGroups).toEqual([]);
+  });
+
+  it("groups and orders module navigation when a navigation group is declared", async () => {
+    const groupedModule = {
+      ...fixtureModule,
+      navigationGroup: { icon: "Package", order: 20 },
+      navigation: [
+        { to: "/admin/contract-sample/new", label: "Novo", order: 2 },
+        { to: "/admin/contract-sample", label: "Lista", order: 1 },
+      ],
+    };
+    const registry = await createModuleRegistry([
+      {
+        name: "contract-sample",
+        load: async () => ({ default: groupedModule }),
+      },
+    ]);
+
+    expect(registry.navigationGroups).toEqual([
+      {
+        moduleName: "contract-sample",
+        label: "Amostra de Contrato",
+        icon: "Package",
+        order: 20,
+        registrationOrder: 0,
+        items: [
+          { to: "/admin/contract-sample", label: "Lista", order: 1 },
+          { to: "/admin/contract-sample/new", label: "Novo", order: 2 },
+        ],
+      },
+    ]);
+    expect(registry.navigation.map((item) => item.label)).toEqual([
+      "Lista",
+      "Novo",
+    ]);
   });
 
   it("compiles the module page through the host bundler", async () => {

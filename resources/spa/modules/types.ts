@@ -19,6 +19,12 @@ export interface ModuleNavigationItem {
   order?: number;
 }
 
+/** Configuração opcional do grupo de navegação de um módulo. */
+export interface ModuleNavigationGroup {
+  icon?: string;
+  order?: number;
+}
+
 /** API recebida por `FrontendModule.register`. */
 export interface ModuleContext {
   moduleName: string;
@@ -30,6 +36,7 @@ export interface ModuleContext {
 export interface FrontendModule {
   name: string;
   displayName?: string;
+  navigationGroup?: ModuleNavigationGroup;
   routes?: ModuleRoute[];
   navigation?: ModuleNavigationItem[];
   register?(context: ModuleContext): void;
@@ -46,10 +53,21 @@ export interface RegisteredModule {
   displayName: string;
 }
 
+/** Projeção de navegação agrupada, mantendo a lista plana legada. */
+export interface RegisteredModuleNavigationGroup {
+  moduleName: string;
+  label: string;
+  icon?: string;
+  order: number;
+  registrationOrder: number;
+  items: ModuleNavigationItem[];
+}
+
 /** Resultado da validação e do registro dos módulos na SPA. */
 export interface FrontendModuleRegistry {
   modules: RegisteredModule[];
   routes: ModuleRoute[];
   navigation: ModuleNavigationItem[];
+  navigationGroups: RegisteredModuleNavigationGroup[];
   issues: string[];
 }

@@ -16,6 +16,7 @@ export interface MovementDraft {
   location_id: number;
   version: number;
   occurred_on: string | null;
+  origin: string | null;
   description: string | null;
   observations: string | null;
   service_order_number: string | null;
@@ -24,6 +25,7 @@ export interface MovementDraft {
     id: number;
     variant_id: number;
     quantity: number | null;
+    unit_cost?: string | null;
     counted_quantity?: number | null;
     snapshot: Record<string, string>;
   }>;
@@ -70,6 +72,33 @@ export const movementService = {
       await apiRequest<ApiResource<MovementDraft>>(
         `/inventory/movements/${id}/cancel`,
         { method: "POST", body: {} },
+      )
+    ).data;
+  },
+  async post(id: number, version: number) {
+    return (
+      await apiRequest<ApiResource<Record<string, number | string>>>(
+        `/inventory/movements/${id}/post`,
+        {
+          method: "POST",
+          headers: { "Idempotency-Key": crypto.randomUUID() },
+          body: { version },
+        },
+      )
+    ).data;
+  },
+  async updateDraft(
+    id: number,
+    version: number,
+    input: Omit<DraftInput, "type" | "locationId">,
+  ) {
+    return (
+      await apiRequest<ApiResource<MovementDraft>>(
+        `/inventory/movements/${id}`,
+        {
+          method: "PATCH",
+          body: { ...input, version },
+        },
       )
     ).data;
   },

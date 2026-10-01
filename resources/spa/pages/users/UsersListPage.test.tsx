@@ -62,6 +62,7 @@ describe("UsersListPage", () => {
       email: "admin@example.com",
       roles: ["super-admin"],
       permissions: ["users.viewAny", "users.create", "users.update"],
+      isSuperAdmin: false,
     });
 
     renderWithProviders(<UsersListPage />, { route: "/admin/users" });
@@ -79,6 +80,7 @@ describe("UsersListPage", () => {
       email: "consulta@example.com",
       roles: ["viewer"],
       permissions: ["users.viewAny"],
+      isSuperAdmin: false,
     });
 
     renderWithProviders(<UsersListPage />, { route: "/admin/users" });
