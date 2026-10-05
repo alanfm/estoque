@@ -7,6 +7,7 @@ import { UsersListPage } from "./UsersListPage";
 
 vi.mock("../../services/auth/authService", () => ({
   authService: {
+    options: vi.fn(),
     currentUser: vi.fn(),
     login: vi.fn(),
     logout: vi.fn(),
@@ -35,6 +36,9 @@ const page = {
       id: 1,
       name: "Ana Souza",
       email: "ana@example.com",
+      registry: null,
+      ldapEnabled: false,
+      localAuthEnabled: true,
       roles: ["admin"],
       createdAt: "2026-09-21T12:30:00Z",
     },

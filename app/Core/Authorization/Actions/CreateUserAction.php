@@ -18,6 +18,9 @@ final class CreateUserAction
             $user = User::query()->create([
                 'name' => $data->name,
                 'email' => mb_strtolower($data->email),
+                'registry' => $data->registry,
+                'ldap_enabled' => $data->ldapEnabled,
+                'local_auth_enabled' => $data->localAuthEnabled,
             ]);
             $user->password = null;
             $user->save();
@@ -26,7 +29,9 @@ final class CreateUserAction
             return $user;
         });
 
-        $this->sendPasswordResetLink->execute($user->email);
+        if ($user->local_auth_enabled) {
+            $this->sendPasswordResetLink->execute($user->email);
+        }
 
         return $user->load('roles');
     }

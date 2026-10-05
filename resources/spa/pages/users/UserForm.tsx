@@ -15,6 +15,9 @@ export interface UserFormValues {
   name: string;
   email: string;
   roles: string[];
+  registry: string;
+  ldapEnabled: boolean;
+  localAuthEnabled: boolean;
 }
 
 export interface UserFormProps {
@@ -24,6 +27,7 @@ export interface UserFormProps {
   roles: Role[];
   rolesAvailable: boolean;
   rolesLoading: boolean;
+  dataLocked?: boolean;
   onSubmit(values: UserFormValues): Promise<void>;
 }
 
@@ -34,6 +38,7 @@ export function UserForm({
   roles,
   rolesAvailable,
   rolesLoading,
+  dataLocked = false,
   onSubmit,
 }: UserFormProps) {
   const [generalError, setGeneralError] = useState<string | null>(null);
@@ -57,10 +62,17 @@ export function UserForm({
   return (
     <form noValidate onSubmit={submit} className="max-w-[720px] space-y-6">
       <FormError message={generalError} />
+      {dataLocked ? (
+        <p className="text-body-sm text-ink-secondary">
+          Os dados desta conta são administrados pelo LDAP. O usuário pode
+          sincronizá-los no perfil. Os papéis são definidos nesta aplicação.
+        </p>
+      ) : null}
 
       <Field id="name" label="Nome" required error={errors.name?.message}>
         <Input
           autoComplete="name"
+          readOnly={dataLocked}
           {...register("name", { required: "Informe o nome." })}
         />
       </Field>
@@ -69,6 +81,7 @@ export function UserForm({
         <Input
           type="email"
           autoComplete="email"
+          readOnly={dataLocked}
           {...register("email", {
             required: "Informe o e-mail.",
             pattern: {
@@ -78,6 +91,47 @@ export function UserForm({
           })}
         />
       </Field>
+
+      <Field
+        id="registry"
+        label="Matrícula"
+        required
+        error={errors.registry?.message}
+      >
+        <Input
+          autoComplete="off"
+          readOnly={dataLocked}
+          {...register("registry", {
+            setValueAs: (value: string) => value.trim().toLowerCase(),
+            required: "Informe a matrícula.",
+            pattern: {
+              value: /^[a-zA-Z0-9._-]+$/,
+              message:
+                "Use apenas letras, números, ponto, hífen ou sublinhado.",
+            },
+          })}
+        />
+      </Field>
+
+      <CheckboxGroup
+        legend="Origens de autenticação"
+        description="As permissões continuam sendo administradas nesta aplicação."
+      >
+        <CheckboxField
+          id="ldapEnabled"
+          disabled={dataLocked}
+          label="Permitir conta institucional IFCE"
+          description="Autentica pela matrícula no diretório institucional."
+          {...register("ldapEnabled")}
+        />
+        <CheckboxField
+          id="localAuthEnabled"
+          disabled={dataLocked}
+          label="Permitir senha local"
+          description="Quando LDAP e senha local estão habilitados, a senha local serve como contingência."
+          {...register("localAuthEnabled")}
+        />
+      </CheckboxGroup>
 
       <CheckboxGroup
         legend="Papéis"

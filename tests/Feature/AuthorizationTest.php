@@ -9,6 +9,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -93,6 +94,7 @@ class AuthorizationTest extends TestCase
 
         $created = $this->postJson('/api/v1/admin/users', [
             'name' => 'Nova Pessoa',
+            'registry' => 'nova001',
             'email' => 'NOVA@example.test',
             'roles' => ['operator'],
         ])->assertCreated()
@@ -214,7 +216,7 @@ class AuthorizationTest extends TestCase
         $this->actingAs($root);
 
         $this->patchJson('/api/v1/admin/users/'.$root->getKey(), ['roles' => []])
-            ->assertStatus(409)->assertJsonPath('error.code', 'CONFLICT');
+            ->assertStatus(409)->assertJsonPath('error.code', 'LAST_LOCAL_SUPER_ADMIN');
         $this->deleteJson('/api/v1/admin/users/'.$root->getKey())->assertStatus(409);
         $this->assertNotNull($root->fresh());
         $this->assertTrue($root->fresh()->isSuperAdmin());
@@ -303,6 +305,8 @@ class AuthorizationTest extends TestCase
     {
         $role = Role::query()->firstOrCreate(['slug' => Role::SUPER_ADMIN], ['name' => 'Superadministrador']);
         $user = User::query()->create(['name' => 'Root', 'email' => $email]);
+        $user->password = Hash::make('root-local-password-123');
+        $user->save();
         $user->roles()->attach($role);
 
         return $user;

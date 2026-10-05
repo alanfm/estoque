@@ -9,11 +9,14 @@ test.describe("Administração de usuários", () => {
 
     await page.getByLabel(/^Nome/).fill("Usuária E2E");
     await page.getByLabel(/^E-mail/).fill(email);
+    await page.getByLabel(/^Matrícula/).fill(`e2e-${Date.now()}`);
     await page.getByRole("button", { name: "Criar usuário" }).click();
 
     await expect(page).toHaveURL(/\/admin\/users$/);
     await expect(
-      page.getByText("Usuário criado e convite enviado por e-mail."),
+      page.getByText(
+        "Usuário criado e link de definição da senha local enviado por e-mail.",
+      ),
     ).toBeVisible();
     await expect(page.getByText(email)).toBeVisible();
   });
@@ -21,7 +24,7 @@ test.describe("Administração de usuários", () => {
   test("filtra usuários e reflete o filtro na URL", async ({ page }) => {
     await page.goto("/admin/users");
     await page
-      .getByPlaceholder("Buscar por nome ou e-mail")
+      .getByPlaceholder("Buscar por nome, matrícula ou e-mail")
       .fill("consulta-inexistente");
 
     await expect(page).toHaveURL(/search=consulta-inexistente/);

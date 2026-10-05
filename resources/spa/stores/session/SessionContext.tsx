@@ -22,6 +22,7 @@ export interface SessionContextValue {
   login(credentials: LoginCredentials): Promise<SessionUser>;
   logout(): Promise<void>;
   refresh(): Promise<void>;
+  syncProfile(password: string): Promise<SessionUser>;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -49,6 +50,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     const user = await authService.login(credentials);
+    dispatch({ type: "authenticated", user });
+    return user;
+  }, []);
+
+  const syncProfile = useCallback(async (password: string) => {
+    const user = await authService.syncProfile(password);
     dispatch({ type: "authenticated", user });
     return user;
   }, []);
@@ -83,8 +90,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       login,
       logout,
       refresh,
+      syncProfile,
     }),
-    [state, login, logout, refresh],
+    [state, login, logout, refresh, syncProfile],
   );
 
   return (

@@ -1,5 +1,5 @@
 import { ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useLocation, useNavigate } from "react-router";
 import { Button } from "../../components/actions/Button";
@@ -7,11 +7,14 @@ import { FormError } from "../../components/feedback/FormError";
 import { Field } from "../../components/forms/Field";
 import { Input } from "../../components/forms/Input";
 import { applyApiError } from "../../lib/formErrors";
+import { ApiError } from "../../services/api/errors";
 import { useDocumentTitle } from "../../router/guards";
+import { authService } from "../../services/auth/authService";
 import { useSession } from "../../stores/session/SessionContext";
+import type { AuthOptions, LoginCredentials } from "../../types/auth";
 
 interface LoginFormValues {
-  email: string;
+  registry: string;
   password: string;
 }
 
@@ -21,29 +24,66 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [generalError, setGeneralError] = useState<string | null>(null);
-
+  const [options, setOptions] = useState<AuthOptions | null>(null);
+  const [optionsError, setOptionsError] = useState(false);
   const {
     register,
     handleSubmit,
     setError,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
-    defaultValues: { email: "", password: "" },
+    defaultValues: { registry: "", password: "" },
   });
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void authService
+      .options(controller.signal)
+      .then((result) => {
+        setOptions(result);
+      })
+      .catch((error: unknown) => {
+        if (
+          typeof error === "object" &&
+          error !== null &&
+          "name" in error &&
+          error.name === "AbortError"
+        ) {
+          return;
+        }
+        setOptionsError(true);
+      });
+    return () => controller.abort();
+  }, []);
 
   const state = location.state as { from?: { pathname?: string } } | null;
   const redirectTo = state?.from?.pathname ?? "/";
 
   const onSubmit = handleSubmit(async (values) => {
     setGeneralError(null);
-
+    const credentials: LoginCredentials = {
+      provider: "auto",
+      registry: values.registry.trim().toLowerCase(),
+      password: values.password,
+    };
     try {
-      await login(values);
+      await login(credentials);
       navigate(redirectTo, { replace: true });
     } catch (error) {
-      setGeneralError(applyApiError(error, setError));
+      if (error instanceof ApiError && error.status === 503) {
+        setValue("password", "");
+        setGeneralError(error.message);
+      } else {
+        setGeneralError(applyApiError(error, setError));
+      }
     }
   });
+
+  const canSubmit =
+    options !== null &&
+    !optionsError &&
+    (options.localEnabled || options.ldapEnabled);
 
   return (
     <div className="grid gap-[26px]">
@@ -59,26 +99,30 @@ export function LoginPage() {
         </p>
       </div>
 
+      {optionsError ? (
+        <p role="alert" className="text-body-sm text-danger">
+          Não foi possível carregar as opções de acesso. Tente novamente.
+        </p>
+      ) : null}
       <FormError message={generalError} />
 
       <form noValidate onSubmit={onSubmit} className="grid gap-[18px]">
         <Field
-          id="email"
-          label="E-mail institucional"
+          id="registry"
+          label="Matrícula"
           required
-          error={errors.email?.message}
+          error={errors.registry?.message}
         >
           <Input
-            type="email"
             autoComplete="username"
-            placeholder="nome@instituicao.edu.br"
             autoFocus
+            placeholder="Informe sua matrícula"
             className="min-h-11"
-            {...register("email", {
-              required: "Informe o e-mail.",
+            {...register("registry", {
+              required: "Informe a matrícula.",
               pattern: {
-                value: /^[^@\s]+@[^@\s]+\.[^@\s]+$/,
-                message: "Informe um e-mail válido.",
+                value: /^[a-zA-Z0-9._-]+$/,
+                message: "Informe uma matrícula válida.",
               },
             })}
           />
@@ -99,13 +143,27 @@ export function LoginPage() {
           />
         </Field>
 
-        <div className="flex items-center justify-end text-body-sm">
+        <div className="grid gap-2 text-right text-body-sm">
           <Link
             to="/forgot-password"
             className="font-semibold text-brand underline underline-offset-[3px] hover:text-brand-hover"
           >
-            Esqueci minha senha
+            Recuperar senha local
           </Link>
+          {options?.ldapEnabled ? (
+            options.ldapPasswordHelpUrl ? (
+              <a
+                href={options.ldapPasswordHelpUrl}
+                className="font-semibold text-brand underline underline-offset-[3px]"
+              >
+                Recuperar senha institucional
+              </a>
+            ) : (
+              <span className="text-ink-muted">
+                Para recuperar a senha institucional, procure a TI do IFCE.
+              </span>
+            )
+          ) : null}
         </div>
 
         <Button
@@ -113,8 +171,9 @@ export function LoginPage() {
           size="comfortable"
           className="mt-0.5 w-full"
           loading={isSubmitting}
+          disabled={!canSubmit}
         >
-          Entrar na plataforma
+          Entrar na plataforma{" "}
           <ArrowRight className="size-4" aria-hidden="true" />
         </Button>
       </form>

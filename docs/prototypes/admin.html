@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Painel de gestão — Exemplo AdminLayout</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="admin-page">
+  <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="icon-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="icon-layout-dashboard" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></symbol>
+    <symbol id="icon-clipboard-list" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M8 12h.01M8 16h.01M12 12h4M12 16h4"/></symbol>
+    <symbol id="icon-chart-column" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></symbol>
+    <symbol id="icon-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="icon-circle-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+    <symbol id="icon-external-link" viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"/></symbol>
+    <symbol id="icon-log-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="icon-circle-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></symbol>
+    <symbol id="icon-arrow-up" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></symbol>
+    <symbol id="icon-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+  </svg>
+  <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+  <header class="admin-top">
+    <div class="admin-top-left">
+      <details class="mobile-admin-menu"><summary aria-label="Abrir menu"><svg class="icon" aria-hidden="true"><use href="#icon-menu"/></svg> Menu</summary><nav class="mobile-admin-panel" aria-label="Menu administrativo mobile"><a href="#visao" aria-current="page">Visão geral</a><a href="#solicitacoes">Solicitações</a><a href="#indicadores">Indicadores</a><a href="#ajuda">Ajuda</a><a href="public.html">Portal público</a><a href="auth.html">Sair</a></nav></details>
+      <a class="logo-link logo-link-admin" href="admin.html" aria-label="IFCE Campus Sobral — painel"><img src="logo_h.png" alt="" width="1605" height="459"></a>
+      <nav class="page-switcher" aria-label="Ver layouts de exemplo"><a href="auth.html">Autenticação</a><a href="public.html">Público</a><a href="admin.html" aria-current="page">Administração</a></nav>
+    </div>
+    <div class="admin-top-right"><span class="prototype-note">Exemplo visual</span><span class="avatar" aria-hidden="true">AC</span><span class="user-name">Ana Costa</span></div>
+  </header>
+  <div class="admin-grid">
+    <aside class="admin-sidebar" aria-label="Menu administrativo">
+      <div class="sidebar-title">Espaço de trabalho</div>
+      <nav class="sidebar-nav" aria-label="Navegação administrativa">
+        <a href="#visao" aria-current="page"><span class="ico" aria-hidden="true"><svg class="icon"><use href="#icon-layout-dashboard"/></svg></span> Visão geral</a>
+        <a href="#solicitacoes"><span class="ico" aria-hidden="true"><svg class="icon"><use href="#icon-clipboard-list"/></svg></span> Solicitações</a>
+        <a href="#indicadores"><span class="ico" aria-hidden="true"><svg class="icon"><use href="#icon-chart-column"/></svg></span> Indicadores</a>
+        <a href="#equipe"><span class="ico" aria-hidden="true"><svg class="icon"><use href="#icon-users"/></svg></span> Equipe</a>
+      </nav>
+      <hr class="sidebar-divider">
+      <div class="sidebar-title">Conta</div>
+      <nav class="sidebar-nav" aria-label="Conta"><a href="#ajuda"><span class="ico" aria-hidden="true"><svg class="icon"><use href="#icon-circle-help"/></svg></span> Ajuda</a><a href="public.html"><span class="ico" aria-hidden="true"><svg class="icon"><use href="#icon-external-link"/></svg></span> Portal público</a><a href="auth.html"><span class="ico" aria-hidden="true"><svg class="icon"><use href="#icon-log-out"/></svg></span> Sair</a></nav>
+    </aside>
+    <main id="conteudo" class="admin-main"><div class="admin-main-inner">
+      <nav class="breadcrumbs" aria-label="Trilha de navegação"><a href="admin.html">Início</a><span aria-hidden="true">/</span><span aria-current="page">Visão geral</span></nav>
+      <section id="visao" class="page-head" aria-labelledby="page-title"><div><span class="eyebrow">Terça-feira, 22 de setembro</span><h1 id="page-title">Visão geral</h1><p>Acompanhe o que precisa da sua atenção hoje.</p></div><div class="head-actions"><a class="btn btn-secondary" href="#indicadores">Ver indicadores</a><a class="btn btn-primary" href="#solicitacoes">Nova solicitação <svg class="icon" aria-hidden="true"><use href="#icon-plus"/></svg></a></div></section>
+      <div class="admin-alert" role="status"><svg class="icon" aria-hidden="true"><use href="#icon-circle-alert"/></svg><div><strong>Há 4 solicitações aguardando análise</strong><p>Revise os itens pendentes para manter o atendimento em dia.</p></div></div>
+      <section id="indicadores" class="metric-grid" aria-label="Indicadores do mês">
+        <div class="metric card"><small>Solicitações em andamento</small><strong>24</strong><span>Atualizado hoje às 09h30</span></div>
+        <div class="metric card"><small>Concluídas neste mês</small><strong>86</strong><span><span class="delta"><svg class="icon" aria-hidden="true"><use href="#icon-arrow-up"/></svg> 12%</span> em relação ao mês anterior</span></div>
+        <div class="metric card"><small>Aguardando sua análise</small><strong>04</strong><span>Itens que precisam de uma ação</span></div>
+      </section>
+      <section id="solicitacoes" aria-labelledby="solicitacoes-title"><div class="admin-section-head"><h2 id="solicitacoes-title">Solicitações recentes</h2><a class="text-link" href="#solicitacoes">Ver todas <svg class="icon" aria-hidden="true"><use href="#icon-arrow-right"/></svg></a></div>
+        <div class="table-panel card"><form class="filter-bar" aria-label="Filtros ilustrativos"><div class="field"><label for="busca">Buscar solicitação</label><input id="busca" type="search" placeholder="Nome, assunto ou protocolo"></div><div class="field"><label for="status">Status</label><select id="status"><option>Todos os status</option><option>Em análise</option><option>Concluída</option><option>Aguardando dados</option></select></div><button class="btn btn-secondary" type="button">Filtrar</button></form>
+          <div class="table-scroll"><table><thead><tr><th scope="col">Solicitação</th><th scope="col">Responsável</th><th scope="col">Recebida em</th><th scope="col">Status</th><th scope="col">Ação</th></tr></thead><tbody>
+            <tr><td><span class="cell-title">Atualização cadastral</span><span class="cell-sub">Protocolo #2026-0842</span></td><td>Mariana Alves</td><td>22 set. 2026</td><td><span class="badge badge-warning">Em análise</span></td><td><a class="text-link" href="#solicitacoes" aria-label="Ver atualização cadastral, protocolo 2026-0842">Ver detalhes</a></td></tr>
+            <tr><td><span class="cell-title">Solicitação de documento</span><span class="cell-sub">Protocolo #2026-0839</span></td><td>João Pereira</td><td>21 set. 2026</td><td><span class="badge badge-success">Concluída</span></td><td><a class="text-link" href="#solicitacoes" aria-label="Ver solicitação de documento, protocolo 2026-0839">Ver detalhes</a></td></tr>
+            <tr><td><span class="cell-title">Revisão de informações</span><span class="cell-sub">Protocolo #2026-0837</span></td><td>Camila Oliveira</td><td>20 set. 2026</td><td><span class="badge badge-neutral">Aguardando dados</span></td><td><a class="text-link" href="#solicitacoes" aria-label="Ver revisão de informações, protocolo 2026-0837">Ver detalhes</a></td></tr>
+          </tbody></table></div><div class="table-foot"><span>Mostrando 3 de 24 solicitações</span></div></div>
+      </section>
+      <p id="ajuda" class="prototype-note" style="margin-top:28px">Dúvidas? Entre em contato com a recepção do campus pelos canais abaixo.</p>
+    </div>
+    <footer class="admin-footer institution-footer">
+      <div class="footer-contact"><strong>IFCE Campus Sobral</strong><span>Av. Dr. Guarany, 317, Jocely Dantas de Andrade Torres · Sobral/CE · CEP 62042-030</span></div>
+      <div class="footer-contact"><a href="tel:+558831128100">(88) 3112-8100</a><a href="mailto:recepcao@sobral.ifce.edu.br">recepcao@sobral.ifce.edu.br</a></div>
+      <small class="footer-credit">Desenvolvido pela Coordenadoria de Tecnologia da Informação (CTI) do Campus Sobral.</small>
+    </footer>
+    </main>
+  </div>
+</body>
+</html>

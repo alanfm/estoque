@@ -28,4 +28,4 @@ Uma resposta 419 pode atualizar o cookie CSRF e repetir no máximo uma vez. GET 
 
 ## Compatibilidade
 
-O core declara a extensão como incremento MINOR para `1.1.0`. Um módulo que use esses novos exports declara `core: ^1.1.0`; Customers foi atualizado como consumidor de referência. O número local não publica release nem cria tag.
+O core declara a extensão como incremento MINOR para `1.1.0`. Um módulo que use esses novos exports declara `core: ^1.1.0`; Inventory é o consumidor instalado no estoque; o exemplo Customers do upstream foi removido desta aplicação. O número local não publica release nem cria tag.

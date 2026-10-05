@@ -76,7 +76,8 @@ export function AuthLayout() {
             {siteConfig.address} · CEP {siteConfig.postalCode}
           </span>
         </div>
-        <div className="grid content-start gap-0.5 text-body-sm text-ink-secondary">
+        <div className="grid content-start gap-0.5 text-body-sm text-ink-secondary text-right">
+          <h2 className="font-bold">Contatos</h2>
           <a
             href={`tel:+55${siteConfig.phone.replace(/\D/g, "")}`}
             className="font-semibold"

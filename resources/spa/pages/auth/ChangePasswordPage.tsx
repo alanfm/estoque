@@ -10,6 +10,7 @@ import { Input } from "../../components/forms/Input";
 import { applyApiError } from "../../lib/formErrors";
 import { useDocumentTitle } from "../../router/guards";
 import { authService } from "../../services/auth/authService";
+import { useSession } from "../../stores/session/SessionContext";
 
 interface ChangeFormValues {
   currentPassword: string;
@@ -21,6 +22,9 @@ export function ChangePasswordPage() {
   useDocumentTitle("Alterar senha");
   const [success, setSuccess] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
+  const { state } = useSession();
+  const canChangeLocalPassword =
+    state.user?.authentication?.canChangeLocalPassword ?? true;
 
   const {
     register,
@@ -57,71 +61,81 @@ export function ChangePasswordPage() {
       background={<DashboardPage />}
     >
       <div className="max-w-[720px] space-y-4">
-        {success ? (
-          <Alert variant="success" title="Senha alterada">
-            Sua senha foi alterada com sucesso.
+        {!canChangeLocalPassword ? (
+          <Alert variant="neutral" title="Senha institucional">
+            A senha da conta IFCE é administrada pelo diretório institucional.
+            Procure a TI do IFCE para redefini-la.
           </Alert>
         ) : null}
+        {canChangeLocalPassword ? (
+          <>
+            {success ? (
+              <Alert variant="success" title="Senha alterada">
+                Sua senha foi alterada com sucesso.
+              </Alert>
+            ) : null}
 
-        <FormError message={generalError} />
+            <FormError message={generalError} />
 
-        <form noValidate onSubmit={onSubmit} className="space-y-4">
-          <Field
-            id="currentPassword"
-            label="Senha atual"
-            required
-            error={errors.currentPassword?.message}
-          >
-            <Input
-              type="password"
-              autoComplete="current-password"
-              {...register("currentPassword", {
-                required: "Informe a senha atual.",
-              })}
-            />
-          </Field>
+            <form noValidate onSubmit={onSubmit} className="space-y-4">
+              <Field
+                id="currentPassword"
+                label="Senha atual"
+                required
+                error={errors.currentPassword?.message}
+              >
+                <Input
+                  type="password"
+                  autoComplete="current-password"
+                  {...register("currentPassword", {
+                    required: "Informe a senha atual.",
+                  })}
+                />
+              </Field>
 
-          <Field
-            id="password"
-            label="Nova senha"
-            required
-            hint="Mínimo de 12 caracteres."
-            error={errors.password?.message}
-          >
-            <Input
-              type="password"
-              autoComplete="new-password"
-              {...register("password", {
-                required: "Informe a nova senha.",
-                minLength: {
-                  value: 12,
-                  message: "A senha deve ter pelo menos 12 caracteres.",
-                },
-              })}
-            />
-          </Field>
+              <Field
+                id="password"
+                label="Nova senha"
+                required
+                hint="Mínimo de 12 caracteres."
+                error={errors.password?.message}
+              >
+                <Input
+                  type="password"
+                  autoComplete="new-password"
+                  {...register("password", {
+                    required: "Informe a nova senha.",
+                    minLength: {
+                      value: 12,
+                      message: "A senha deve ter pelo menos 12 caracteres.",
+                    },
+                  })}
+                />
+              </Field>
 
-          <Field
-            id="passwordConfirmation"
-            label="Confirmar nova senha"
-            required
-            error={errors.passwordConfirmation?.message}
-          >
-            <Input
-              type="password"
-              autoComplete="new-password"
-              {...register("passwordConfirmation", {
-                required: "Confirme a nova senha.",
-                validate: (value, values) =>
-                  value === values.password || "As senhas não coincidem.",
-              })}
-            />
-          </Field>
+              <Field
+                id="passwordConfirmation"
+                label="Confirmar nova senha"
+                required
+                error={errors.passwordConfirmation?.message}
+              >
+                <Input
+                  type="password"
+                  autoComplete="new-password"
+                  {...register("passwordConfirmation", {
+                    required: "Confirme a nova senha.",
+                    validate: (value, values) =>
+                      value === values.password || "As senhas não coincidem.",
+                  })}
+                />
+              </Field>
 
-          <Button type="submit" loading={isSubmitting}>
-            Salvar nova senha
-          </Button>
-        </form>
+              <Button type="submit" loading={isSubmitting}>
+                Salvar nova senha
+              </Button>
+            </form>
+          </>
+        ) : null}
       </div>
     </FormModal>
   );

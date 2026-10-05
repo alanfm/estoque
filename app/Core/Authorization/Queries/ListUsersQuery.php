@@ -18,6 +18,7 @@ final class ListUsersQuery
             ->when($search !== null && $search !== '', function (Builder $query) use ($search): void {
                 $query->where(function (Builder $query) use ($search): void {
                     $query->where('name', 'like', '%'.$search.'%')
+                        ->orWhere('registry', 'like', '%'.$search.'%')
                         ->orWhere('email', 'like', '%'.$search.'%');
                 });
             })
@@ -28,7 +29,7 @@ final class ListUsersQuery
     /** @return array{0: string, 1: string} */
     private function parseSort(string $sort): array
     {
-        $columns = ['name' => 'name', 'email' => 'email', 'createdAt' => 'created_at'];
+        $columns = ['name' => 'name', 'registry' => 'registry', 'email' => 'email', 'createdAt' => 'created_at'];
 
         $direction = str_starts_with($sort, '-') ? 'desc' : 'asc';
         $key = ltrim($sort, '-');

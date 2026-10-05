@@ -4,44 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1d0f86b24c3e928c8572b5e7120398e0",
+    "content-hash": "219e9f98fdde81ea4f00125c033a7a9f",
     "packages": [
-        {
-            "name": "acme/customers",
-            "version": "1.0.0",
-            "dist": {
-                "type": "path",
-                "url": "modules/acme/customers",
-                "reference": "d2c0ec20a05c2496f16405ef18950d7851045a98"
-            },
-            "require": {
-                "laravel/framework": "^13.0",
-                "php": "~8.5.0"
-            },
-            "type": "starterkit-module",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "Acme\\Customers\\CustomersServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Acme\\Customers\\": "src/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "Acme\\Customers\\Tests\\": "tests/"
-                }
-            },
-            "description": "Módulo de referência de clientes para Starter Kit",
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
-        },
         {
             "name": "acme/inventory",
             "version": "1.0.0",

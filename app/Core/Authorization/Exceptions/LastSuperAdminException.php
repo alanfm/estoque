@@ -8,6 +8,6 @@ final class LastSuperAdminException extends ConflictHttpException
 {
     public static function make(): self
     {
-        return new self('O último superadministrador não pode ser removido.');
+        return new self('O último superadministrador com acesso local não pode ser removido.');
     }
 }

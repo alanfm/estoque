@@ -11,9 +11,14 @@ final class User extends Authenticatable
 {
     use Notifiable;
 
-    protected $fillable = ['name', 'email'];
+    protected $fillable = ['name', 'email', 'registry', 'ldap_enabled', 'local_auth_enabled'];
 
     protected $hidden = ['password'];
+
+    protected function casts(): array
+    {
+        return ['ldap_enabled' => 'boolean', 'local_auth_enabled' => 'boolean', 'ldap_managed' => 'boolean', 'ldap_synced_at' => 'datetime'];
+    }
 
     /** @return BelongsToMany<Role, $this> */
     public function roles(): BelongsToMany

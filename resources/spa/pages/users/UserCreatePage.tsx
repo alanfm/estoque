@@ -21,10 +21,17 @@ export function UserCreatePage() {
       returnTo="/admin/users"
       background={<UsersListPage />}
       backgroundPermission="users.viewAny"
-      description="A conta receberá por e-mail um link para definir a própria senha."
+      description="Informe a matrícula para login e o e-mail de contato. Contas locais receberão por e-mail um link para definir a própria senha."
     >
       <UserForm
-        defaultValues={{ name: "", email: "", roles: [] }}
+        defaultValues={{
+          name: "",
+          email: "",
+          registry: "",
+          ldapEnabled: false,
+          localAuthEnabled: true,
+          roles: [],
+        }}
         submitLabel="Criar usuário"
         cancelTo="/admin/users"
         roles={roles}
@@ -34,7 +41,11 @@ export function UserCreatePage() {
           await usersService.create(values);
           navigate("/admin/users", {
             replace: true,
-            state: { flash: "Usuário criado e convite enviado por e-mail." },
+            state: {
+              flash: values.localAuthEnabled
+                ? "Usuário criado e link de definição da senha local enviado por e-mail."
+                : "Usuário institucional criado.",
+            },
           });
         }}
       />

@@ -1,13 +1,13 @@
 import {
   Boxes,
   FileText,
+  FolderKanban,
   Package,
   Settings,
   ShoppingCart,
   Tags,
   ArrowLeftRight,
   ClipboardCheck,
-  FolderKanban,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -17,6 +17,7 @@ const icons: Record<string, LucideIcon> = {
   ArrowLeftRight,
   ClipboardCheck,
   FileText,
+  FolderKanban,
   Package,
   Settings,
   ShoppingCart,

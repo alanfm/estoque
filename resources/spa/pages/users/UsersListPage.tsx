@@ -129,7 +129,7 @@ export function UsersListPage() {
         <Input
           id="users-search"
           type="search"
-          placeholder="Buscar por nome ou e-mail"
+          placeholder="Buscar por nome, matrícula ou e-mail"
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
         />
@@ -168,6 +168,7 @@ export function UsersListPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
+                  <TableHead>Matrícula</TableHead>
                   <TableHead>E-mail</TableHead>
                   <TableHead>Papéis</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -177,6 +178,9 @@ export function UsersListPage() {
                 {data.data.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell className="text-ink-secondary">
+                      {item.registry ?? "—"}
+                    </TableCell>
                     <TableCell className="text-ink-secondary">
                       {item.email}
                     </TableCell>

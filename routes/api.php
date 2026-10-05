@@ -1,5 +1,6 @@
 <?php
 
+use App\Core\Auth\Http\Controllers\AuthOptionsController;
 use App\Core\Auth\Http\Controllers\ChangePasswordController;
 use App\Core\Auth\Http\Controllers\E2eRoleLoginController;
 use App\Core\Auth\Http\Controllers\ForgotPasswordController;
@@ -7,6 +8,7 @@ use App\Core\Auth\Http\Controllers\LoginController;
 use App\Core\Auth\Http\Controllers\LogoutController;
 use App\Core\Auth\Http\Controllers\ResetPasswordController;
 use App\Core\Auth\Http\Controllers\ShowAuthenticatedUserController;
+use App\Core\Auth\Http\Controllers\SyncLdapProfileController;
 use App\Core\Authorization\Http\Controllers\DeleteRoleController;
 use App\Core\Authorization\Http\Controllers\DeleteUserController;
 use App\Core\Authorization\Http\Controllers\ListPermissionsController;
@@ -24,6 +26,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/system/status', ShowSystemStatusController::class);
 
 Route::middleware('web')->prefix('auth')->name('auth.')->group(function (): void {
+    Route::get('/options', AuthOptionsController::class)->name('options');
     Route::post('/login', LoginController::class)->middleware('throttle:auth-ip')->name('login');
     Route::post('/forgot-password', ForgotPasswordController::class)->middleware('throttle:auth-ip')->name('forgot-password');
     Route::post('/reset-password', ResetPasswordController::class)->middleware('throttle:auth-ip')->name('reset-password');
@@ -32,6 +35,7 @@ Route::middleware('web')->prefix('auth')->name('auth.')->group(function (): void
         Route::get('/user', ShowAuthenticatedUserController::class)->name('user');
         Route::post('/logout', LogoutController::class)->name('logout');
         Route::put('/password', ChangePasswordController::class)->middleware('throttle:auth-ip')->name('password');
+        Route::post('/sync-profile', SyncLdapProfileController::class)->middleware('throttle:auth-ip')->name('sync-profile');
     });
 });
 

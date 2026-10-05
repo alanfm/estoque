@@ -2,7 +2,7 @@ import type { FrontendModule } from "@starterkit/module-kit";
 
 const module: FrontendModule = {
   name: "inventory",
-  displayName: "Almoxarifado de TI",
+  displayName: "Almoxarifado",
   navigationGroup: { icon: "Boxes", order: 60 },
   routes: [
     {

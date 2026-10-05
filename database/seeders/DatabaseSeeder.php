@@ -2,25 +2,20 @@
 
 namespace Database\Seeders;
 
-use App\Models\Role;
-use App\Models\User;
+use App\Core\Authorization\CorePermissions;
+use App\Core\Authorization\PermissionSynchronizer;
+use App\Core\Modules\ModuleRegistry;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 final class DatabaseSeeder extends Seeder
 {
-    public function run(): void
+    public function run(PermissionSynchronizer $synchronizer, ModuleRegistry $registry): void
     {
-        $role = Role::query()->firstOrCreate(
-            ['slug' => Role::SUPER_ADMIN],
-            ['name' => 'Superadministrador'],
-        );
+        $this->call(TestUsersSeeder::class);
 
-        $user = User::query()->firstOrNew(['email' => 'admin@example.com']);
-        $user->name = 'Administrador de Teste';
-        $user->password = Hash::make('password');
-        $user->save();
-
-        $user->roles()->syncWithoutDetaching([$role->getKey()]);
+        $synchronizer->sync([
+            ...CorePermissions::definitions(),
+            ...$registry->permissionDefinitions(),
+        ]);
     }
 }

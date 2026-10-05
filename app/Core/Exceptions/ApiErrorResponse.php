@@ -2,6 +2,8 @@
 
 namespace App\Core\Exceptions;
 
+use App\Core\Auth\Exceptions\LdapUnavailableException;
+use App\Core\Authorization\Exceptions\LastSuperAdminException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,6 +36,18 @@ final class ApiErrorResponse
             default => ['INTERNAL_ERROR', 'Não foi possível concluir a solicitação.'],
         };
 
+        if ($exception instanceof LdapUnavailableException) {
+            $code = 'AUTH_PROVIDER_UNAVAILABLE';
+        }
+
+        if ($status === 403 && $exception instanceof HttpExceptionInterface && ($exception->getHeaders()['X-Error-Code'] ?? null) === 'LOCAL_PASSWORD_DISABLED') {
+            $code = 'LOCAL_PASSWORD_DISABLED';
+            $message = 'Esta conta não permite alteração de senha local.';
+        }
+        if ($status === 409 && $exception instanceof LastSuperAdminException) {
+            $code = 'LAST_LOCAL_SUPER_ADMIN';
+        }
+
         $details = $exception instanceof ValidationException
             ? ['fields' => $exception->errors()]
             : null;
@@ -41,6 +55,9 @@ final class ApiErrorResponse
         $headers = $exception instanceof HttpExceptionInterface ? $exception->getHeaders() : [];
         $requestId = $request->attributes->get('requestId');
         $headers['X-Request-Id'] = $requestId;
+        if ($status === 503) {
+            $headers['Retry-After'] ??= '30';
+        }
 
         return response()->json(['error' => compact('code', 'message', 'details') + ['requestId' => $requestId]], $status, $headers);
     }

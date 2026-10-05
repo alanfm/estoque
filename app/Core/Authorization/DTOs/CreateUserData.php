@@ -11,6 +11,9 @@ final readonly class CreateUserData
         public string $name,
         public string $email,
         public array $roles,
+        public ?string $registry = null,
+        public bool $ldapEnabled = false,
+        public bool $localAuthEnabled = true,
     ) {}
 
     public static function fromRequest(StoreUserRequest $request): self
@@ -19,6 +22,9 @@ final readonly class CreateUserData
             name: (string) $request->validated('name'),
             email: (string) $request->validated('email'),
             roles: array_values((array) $request->validated('roles', [])),
+            registry: $request->validated('registry'),
+            ldapEnabled: (bool) $request->validated('ldapEnabled', false),
+            localAuthEnabled: (bool) $request->validated('localAuthEnabled', true),
         );
     }
 }

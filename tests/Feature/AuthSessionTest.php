@@ -17,7 +17,7 @@ class AuthSessionTest extends TestCase
 
     private function makeUser(?string $password = 'correct-password-123'): User
     {
-        $user = User::create(['name' => 'Pessoa', 'email' => 'person@example.test']);
+        $user = User::create(['name' => 'Pessoa', 'email' => 'person@example.test', 'registry' => 'person001']);
         $user->password = $password === null ? null : Hash::make($password);
         $user->save();
 
@@ -26,7 +26,7 @@ class AuthSessionTest extends TestCase
 
     public function test_first_admin_is_provisioned_once_without_default_credentials(): void
     {
-        $this->artisan('core:bootstrap-admin', ['email' => 'ADMIN@example.test', 'name' => 'Admin'])
+        $this->artisan('core:bootstrap-admin', ['registry' => 'admin001', 'email' => 'ADMIN@example.test', 'name' => 'Admin'])
             ->expectsQuestion('Senha inicial (não exibida)', 'a-long-initial-password')
             ->expectsQuestion('Confirme a senha inicial', 'a-long-initial-password')
             ->assertExitCode(0);
@@ -37,9 +37,9 @@ class AuthSessionTest extends TestCase
         $this->assertSame('super-admin', $admin->roles()->sole()->slug);
         $this->assertSame(1, Role::count());
 
-        $this->artisan('core:bootstrap-admin', ['email' => 'admin@example.test', 'name' => 'Another'])
+        $this->artisan('core:bootstrap-admin', ['registry' => 'admin001', 'email' => 'admin@example.test', 'name' => 'Another'])
             ->assertExitCode(0);
-        $this->artisan('core:bootstrap-admin', ['email' => 'another@example.test', 'name' => 'Another'])
+        $this->artisan('core:bootstrap-admin', ['registry' => 'another001', 'email' => 'another@example.test', 'name' => 'Another'])
             ->assertExitCode(1);
         $this->assertSame(1, User::count());
     }
@@ -72,10 +72,10 @@ class AuthSessionTest extends TestCase
         $this->get('/sanctum/csrf-cookie')->assertNoContent();
         $previousId = session()->getId();
 
-        $this->postJson('/api/v1/auth/login', ['email' => $user->email, 'password' => 'wrong'])
-            ->assertStatus(422)->assertJsonPath('error.details.fields.email.0', 'Credenciais inválidas.');
+        $this->postJson('/api/v1/auth/login', ['registry' => $user->registry, 'password' => 'wrong'])
+            ->assertStatus(422)->assertJsonPath('error.details.fields.registry.0', 'Credenciais inválidas.');
 
-        $this->postJson('/api/v1/auth/login', ['email' => $user->email, 'password' => 'correct-password-123'])
+        $this->postJson('/api/v1/auth/login', ['registry' => $user->registry, 'password' => 'correct-password-123'])
             ->assertOk()->assertJsonPath('data.email', $user->email)
             ->assertJsonPath('data.roles', [])->assertJsonPath('data.permissions', []);
         $this->assertNotSame($previousId, session()->getId());
@@ -91,7 +91,7 @@ class AuthSessionTest extends TestCase
         $user = $this->makeUser(null);
         Notification::fake();
 
-        $this->postJson('/api/v1/auth/login', ['email' => $user->email, 'password' => 'correct-password-123'])
+        $this->postJson('/api/v1/auth/login', ['registry' => $user->registry, 'password' => 'correct-password-123'])
             ->assertStatus(422);
         $this->postJson('/api/v1/auth/forgot-password', ['email' => $user->email])->assertStatus(202);
         $token = null;
@@ -104,7 +104,7 @@ class AuthSessionTest extends TestCase
             'email' => $user->email, 'token' => $token,
             'password' => 'first-secure-password-123', 'passwordConfirmation' => 'first-secure-password-123',
         ])->assertNoContent();
-        $this->postJson('/api/v1/auth/login', ['email' => $user->email, 'password' => 'first-secure-password-123'])
+        $this->postJson('/api/v1/auth/login', ['registry' => $user->registry, 'password' => 'first-secure-password-123'])
             ->assertOk();
     }
 
@@ -127,7 +127,7 @@ class AuthSessionTest extends TestCase
         });
         $this->assertNotNull($token);
 
-        $this->postJson('/api/v1/auth/login', ['email' => $user->email, 'password' => 'correct-password-123'])
+        $this->postJson('/api/v1/auth/login', ['registry' => $user->registry, 'password' => 'correct-password-123'])
             ->assertOk();
         $this->getJson('/api/v1/auth/user')->assertOk();
         $this->assertGreaterThanOrEqual(1, DB::table('sessions')->where('user_id', $user->id)->count());
@@ -146,7 +146,7 @@ class AuthSessionTest extends TestCase
         $this->assertTrue(Hash::check('new-secure-password-123', $user->fresh()->password));
         $this->postJson('/api/v1/auth/reset-password', $payload)->assertStatus(422)
             ->assertJsonPath('error.details.fields.token.0', 'Link inválido ou expirado.');
-        $this->postJson('/api/v1/auth/login', ['email' => $user->email, 'password' => 'correct-password-123'])
+        $this->postJson('/api/v1/auth/login', ['registry' => $user->registry, 'password' => 'correct-password-123'])
             ->assertStatus(422);
     }
 
@@ -177,7 +177,7 @@ class AuthSessionTest extends TestCase
     public function test_password_change_checks_current_password_and_keeps_current_session(): void
     {
         $user = $this->makeUser();
-        $this->postJson('/api/v1/auth/login', ['email' => $user->email, 'password' => 'correct-password-123'])->assertOk();
+        $this->postJson('/api/v1/auth/login', ['registry' => $user->registry, 'password' => 'correct-password-123'])->assertOk();
 
         $payload = [
             'currentPassword' => 'wrong', 'password' => 'another-secure-password',
@@ -195,10 +195,10 @@ class AuthSessionTest extends TestCase
         $user = $this->makeUser();
 
         for ($attempt = 0; $attempt < 5; $attempt++) {
-            $this->postJson('/api/v1/auth/login', ['email' => $user->email, 'password' => 'wrong'])
+            $this->postJson('/api/v1/auth/login', ['registry' => $user->registry, 'password' => 'wrong'])
                 ->assertStatus(422);
         }
-        $this->postJson('/api/v1/auth/login', ['email' => $user->email, 'password' => 'wrong'])
+        $this->postJson('/api/v1/auth/login', ['registry' => $user->registry, 'password' => 'wrong'])
             ->assertStatus(429)->assertJsonPath('error.code', 'RATE_LIMITED');
 
         for ($attempt = 0; $attempt < 5; $attempt++) {

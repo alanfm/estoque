@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Entrar — Exemplo AuthLayout</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="auth-page">
+  <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="icon-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="icon-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+  </svg>
+  <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+  <header class="auth-top">
+    <a class="logo-link logo-link-auth" href="public.html" aria-label="IFCE Campus Sobral — página pública"><img src="logo_h.png" alt="" width="1605" height="459"></a>
+    <nav class="page-switcher" aria-label="Ver layouts de exemplo">
+      <a href="auth.html" aria-current="page">Autenticação</a>
+      <a href="public.html">Público</a>
+      <a href="admin.html">Administração</a>
+    </nav>
+  </header>
+  <main id="conteudo" class="auth-main">
+    <section class="auth-intro" aria-label="Apresentação do sistema">
+      <span class="eyebrow">IFCE Campus Sobral · Acesso institucional</span>
+      <h2>Seu espaço de trabalho, simples e organizado.</h2>
+      <p>Uma experiência direta para equipes que precisam acompanhar processos, consultar dados e tomar decisões com confiança.</p>
+      <ul class="feature-list">
+        <li><b aria-hidden="true"><svg class="icon"><use href="#icon-check"/></svg></b> Informações claras em cada etapa</li>
+        <li><b aria-hidden="true"><svg class="icon"><use href="#icon-check"/></svg></b> Acesso seguro e navegação acessível</li>
+        <li><b aria-hidden="true"><svg class="icon"><use href="#icon-check"/></svg></b> Layout que se adapta ao seu dispositivo</li>
+      </ul>
+    </section>
+    <section class="auth-panel card" aria-labelledby="auth-title">
+      <span class="eyebrow">Bem-vindo de volta</span>
+      <h1 id="auth-title">Entrar na plataforma</h1>
+      <p>Informe suas credenciais para acessar sua área de trabalho.</p>
+      <form class="auth-form" aria-label="Formulário ilustrativo de acesso">
+        <div class="field">
+          <label for="email">E-mail institucional</label>
+          <input id="email" name="email" type="email" placeholder="nome@instituicao.edu.br" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="senha">Senha</label>
+          <input id="senha" name="senha" type="password" placeholder="Digite sua senha" autocomplete="current-password" required>
+        </div>
+        <div class="auth-row">
+          <label class="check"><input type="checkbox" name="lembrar"> Manter-me conectado</label>
+          <a class="text-link" href="#recuperacao">Esqueci minha senha</a>
+        </div>
+        <button class="btn btn-primary" type="button">Entrar na plataforma <svg class="icon" aria-hidden="true"><use href="#icon-arrow-right"/></svg></button>
+        <p id="recuperacao" class="field-help">Protótipo visual: o formulário não envia dados. Na aplicação final, a recuperação terá uma página própria.</p>
+      </form>
+    </section>
+  </main>
+  <footer class="auth-footer institution-footer">
+    <div class="footer-contact"><strong>IFCE Campus Sobral</strong><span>Av. Dr. Guarany, 317, Jocely Dantas de Andrade Torres · Sobral/CE · CEP 62042-030</span></div>
+    <div class="footer-contact"><a href="tel:+558831128100">(88) 3112-8100</a><a href="mailto:recepcao@sobral.ifce.edu.br">recepcao@sobral.ifce.edu.br</a></div>
+    <small class="footer-credit">Desenvolvido pela Coordenadoria de Tecnologia da Informação (CTI) do Campus Sobral.</small>
+  </footer>
+</body>
+</html>

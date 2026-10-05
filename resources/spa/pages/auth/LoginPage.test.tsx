@@ -9,6 +9,7 @@ import { LoginPage } from "./LoginPage";
 vi.mock("../../services/auth/authService", () => ({
   authService: {
     currentUser: vi.fn(),
+    options: vi.fn(),
     login: vi.fn(),
     logout: vi.fn(),
     forgotPassword: vi.fn(),
@@ -20,6 +21,12 @@ vi.mock("../../services/auth/authService", () => ({
 const mockedAuth = vi.mocked(authService);
 
 beforeEach(() => {
+  mockedAuth.options.mockResolvedValue({
+    localEnabled: true,
+    ldapEnabled: false,
+    ldapLabel: "Conta institucional IFCE",
+    ldapPasswordHelpUrl: null,
+  });
   mockedAuth.currentUser.mockRejectedValue(
     new ApiError({
       status: 401,
@@ -30,6 +37,21 @@ beforeEach(() => {
 });
 
 describe("LoginPage", () => {
+  test("ignora o cancelamento esperado ao desmontar o efeito de opções", async () => {
+    mockedAuth.options.mockRejectedValue(
+      new DOMException("The operation was aborted.", "AbortError"),
+    );
+
+    renderWithProviders(<LoginPage />);
+
+    await waitFor(() => expect(mockedAuth.options).toHaveBeenCalled());
+    expect(
+      screen.queryByText(
+        "Não foi possível carregar as opções de acesso. Tente novamente.",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
   test("autentica e redireciona", async () => {
     const user = userEvent.setup();
     mockedAuth.login.mockResolvedValue({
@@ -43,7 +65,7 @@ describe("LoginPage", () => {
 
     renderWithProviders(<LoginPage />, { withSession: true });
 
-    await user.type(await screen.findByLabelText(/^E-mail/), "ana@example.com");
+    await user.type(await screen.findByLabelText(/^Matrícula/), "ana001");
     await user.type(screen.getByLabelText(/^Senha/), "senha-secreta");
     await user.click(
       screen.getByRole("button", { name: /Entrar na plataforma/ }),
@@ -51,7 +73,8 @@ describe("LoginPage", () => {
 
     await waitFor(() =>
       expect(mockedAuth.login).toHaveBeenCalledWith({
-        email: "ana@example.com",
+        provider: "auto",
+        registry: "ana001",
         password: "senha-secreta",
       }),
     );
@@ -65,7 +88,7 @@ describe("LoginPage", () => {
         code: "VALIDATION_FAILED",
         message: "As credenciais informadas são inválidas.",
         details: {
-          fields: { email: ["As credenciais informadas são inválidas."] },
+          fields: { registry: ["As credenciais informadas são inválidas."] },
         },
       }),
     );
@@ -73,8 +96,8 @@ describe("LoginPage", () => {
     renderWithProviders(<LoginPage />, { withSession: true });
 
     await userEventInstance.type(
-      await screen.findByLabelText(/^E-mail/),
-      "ana@example.com",
+      await screen.findByLabelText(/^Matrícula/),
+      "ana001",
     );
     await userEventInstance.type(screen.getByLabelText(/^Senha/), "errada");
     await userEventInstance.click(
@@ -83,6 +106,37 @@ describe("LoginPage", () => {
 
     expect(
       await screen.findByText("As credenciais informadas são inválidas."),
+    ).toBeInTheDocument();
+  });
+
+  test("limpa a senha em indisponibilidade LDAP e mantém a matrícula", async () => {
+    const user = userEvent.setup();
+    mockedAuth.options.mockResolvedValue({
+      localEnabled: true,
+      ldapEnabled: true,
+      ldapLabel: "Conta institucional IFCE",
+      ldapPasswordHelpUrl: null,
+    });
+    mockedAuth.login.mockRejectedValue(
+      new ApiError({
+        status: 503,
+        code: "AUTH_PROVIDER_UNAVAILABLE",
+        message: "O serviço institucional está temporariamente indisponível.",
+      }),
+    );
+
+    renderWithProviders(<LoginPage />, { withSession: true });
+    await user.type(await screen.findByLabelText(/Matrícula/), "0012345");
+    const password = screen.getByLabelText(/^Senha/);
+    await user.type(password, "senha-institucional");
+    await user.click(
+      screen.getByRole("button", { name: /Entrar na plataforma/ }),
+    );
+
+    await waitFor(() => expect(password).toHaveValue(""));
+    expect(screen.getByLabelText(/Matrícula/)).toHaveValue("0012345");
+    expect(
+      await screen.findByText(/temporariamente indisponível/),
     ).toBeInTheDocument();
   });
 });

@@ -2,6 +2,7 @@
 
 **Raiz obrigatória do projeto:** `~/Projects/estoque`.
 **Referência técnica:** `alanfm/starterkit`, revisão consultada `ff1812f0dbfd95e84243d738768262ca0d36e1af`; o checkout em `~/Projects/starterkit` não é destino de alterações.
+**Atualização da base em 05/10/2026:** incorporadas as mudanças entre `ff1812f0dbfd95e84243d738768262ca0d36e1af` e `63ff5212e183689e14147ebc19a73295c344909d`, do checkout somente leitura em `/home/alan/Projetos/starterkit`. Evidências e orientações de implantação na seção final deste documento.
 **Estado:** P00 permanece bloqueada pela falha Act registrada; P01 concluída localmente; P02–P09 aceitas pelo usuário para desenvolvimento; P10 em andamento, sem aceite de homologação. A falha Act e as limitações de concorrência/retroatividade permanecem explícitas.
 
 P02 foi iniciada explicitamente pelo usuário antes da resolução do gate P00/P01. Essa decisão não equivale ao aceite do gate anterior; a falha Act segue pendente.
@@ -167,3 +168,38 @@ P11 foi preparada tecnicamente, mas não está aceita para implantação. A libe
 - Verificações via Sail: Prettier da página de movimentações e `npm run typecheck` aprovados.
 
 - Painel do almoxarifado enriquecido com cards de itens ativos/atenção/regulares e movimentos, gráfico diário por tipo, distribuição exclusiva por situação, oito alertas prioritários e atalhos condicionados às permissões. Filtros de data, atualização, estados vazios/erro e validação de intervalo preservados; estoque representa posição atual e gráfico usa contagem de movimentos, sem agregar unidades distintas. Consulta aplica a prioridade normativa de inconsistência antes dos demais alertas. Verificações via Sail: InventoryReportsTest (5 testes/65 assertions), Pint, PHPStan, ESLint dos arquivos alterados, TypeScript e build aprovados. Build mantém aviso existente de chunk principal >500 kB; revisão visual no navegador não executada. Nenhum dado operacional foi alterado.
+
+
+## Atualização do Starter Kit — 05/10/2026
+
+Incorporadas as cinco revisões posteriores ao baseline, até `63ff521`: navegação agrupada por módulo, Vitest 5.0.3, autenticação local/LDAP, seeders de teste protegidos por ambiente e login por matrícula com provisionamento/sincronização de perfil LDAP. O código upstream foi integrado por comparação de três versões (baseline, estoque e starterkit); não houve alteração no repositório de referência.
+
+Preservados: módulo Inventory, bypass de superadministrador, contratos públicos HTTP 1.1 e sua política de retry/idempotência, formulários em modais, GD/ZIP para exportação e volume privado `inventory-imports`. Customers passa para 1.1.0; o core permanece na versão upstream 1.1.0. Lockfiles atualizados sem remover o pacote Inventory ou PhpSpreadsheet. Indisponibilidade LDAP usa `AUTH_PROVIDER_UNAVAILABLE`; demais erros 503 preservam `SERVICE_UNAVAILABLE`.
+
+Corrigida falha preexistente do benchmark sintético: a entrada de exemplo agora informa origem/documento e usa a data corrente. A operação permanece transacional e reverte os dados sintéticos.
+
+### Evidências locais
+
+- Suíte PHP completa: 89 testes / 693 assertions aprovados em MariaDB isolada `starterkit_test`.
+- Após incluir regressões de integração: suíte focal `ApiContractTest|LdapProvisioningTest|LocalLdapAuthenticationTest`, 24 testes / 153 assertions aprovados. Inclui negação de leitura/escrita no inventário para conta LDAP recém-provisionada sem papéis e manutenção do contrato de erro 503 genérico.
+- Vitest 5.0.3: 22 arquivos / 92 testes aprovados, incluindo testes do módulo Inventory e do cliente HTTP público.
+- Pint, PHPStan, Prettier, ESLint, TypeScript (etapa do build) e build Vite aprovados. Permanece o aviso conhecido do bundle principal acima de 500 kB.
+- Diagnóstico modular: core 1.1.0, Customers 1.1.0 e Inventory 1.0.0 habilitados, sem issues.
+- Lockfile npm sem vulnerabilidades reportadas; atualização Composer sem advisories reportados.
+
+### Implantação ainda necessária
+
+As duas migrations de autenticação foram exercitadas somente no banco de testes. Não foram aplicadas ao banco de desenvolvimento ou a homologação/produção; nenhum usuário, papel ou saldo operacional foi alterado e nenhum seeder foi executado nesses bancos. Não houve importação da planilha.
+
+Antes de liberar esta versão: aplicar as migrations com backup, associar matrículas conferidas aos usuários existentes (incluindo o administrador) e verificar login local. Os registros antigos mantêm ID, senha, papéis e vínculos com o inventário, mas a migration não inventa matrículas. `AUTH_MODE=local` continua sendo o padrão; a ativação LDAP exige configuração/homologação institucional. O comando de bootstrap cria apenas o primeiro administrador e não preenche matrículas de administradores existentes.
+
+Os testes E2E foram adaptados ao novo login, mas não executados nesta atualização. Não foram executados Act, rebuild das imagens de produção ou conexão ao diretório institucional real; testes LDAP usam adaptador simulado. Os resultados upstream importados em documentos F0–F7/SPEC são históricos da referência, não evidência de implantação do estoque. Consulte também o [guia de implantação](../modules/inventory/implantacao.md).
+
+
+## Remoção do módulo de exemplo Clientes — 05/10/2026
+
+Removido `modules/acme/customers`, a dependência Composer `acme/customers`, os testes funcionais/E2E exclusivos do exemplo e o caminho de formatação do frontend. O smoke de produção do pipeline passa a verificar `/api/v1/inventory/items` e o asset `ItemsPage.tsx`. A documentação operacional aponta para Inventory; menções históricas ao exemplo upstream e fixtures sintéticas de navegação permanecem como referência.
+
+A remoção não executa rollback nem exclui tabelas ou dados existentes. O catálogo de permissões obsoletas será atualizado pelo comando normal `core:sync-permissions` na implantação, preservando vínculos históricos. O starterkit de referência permanece intacto.
+
+Verificações após a remoção: suíte PHP completa com 88 testes / 680 assertions; PHPStan, formatação frontend e build com TypeScript aprovados. Diagnóstico lista apenas Inventory 1.0.0 habilitado, sem issues. Manifesto do build verificado sem entradas Customers e com `ItemsPage.tsx` do Inventory.

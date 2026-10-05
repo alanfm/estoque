@@ -45,15 +45,22 @@ export function UserEditPage() {
           defaultValues={{
             name: data.name,
             email: data.email,
+            registry: data.registry ?? "",
+            ldapEnabled: data.ldapEnabled,
+            localAuthEnabled: data.localAuthEnabled,
             roles: data.roles,
           }}
           submitLabel="Salvar alterações"
+          dataLocked={data.accountSource === "ldap"}
           cancelTo="/admin/users"
           roles={roles}
           rolesAvailable={rolesAvailable}
           rolesLoading={rolesLoading}
           onSubmit={async (values) => {
-            await usersService.update(id, values);
+            await usersService.update(
+              id,
+              data.accountSource === "ldap" ? { roles: values.roles } : values,
+            );
             navigate("/admin/users", {
               replace: true,
               state: { flash: "Usuário atualizado." },

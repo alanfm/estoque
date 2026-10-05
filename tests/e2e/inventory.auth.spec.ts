@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { adminEmail, adminPassword } from "./support";
+import { adminRegistry, adminPassword } from "./support";
 
 const basePermissions = [
   "inventory.items.viewAny",
@@ -54,9 +54,9 @@ test.describe("Módulo de almoxarifado — papéis operacionais", () => {
     }) => {
       await page.context().clearCookies();
       await page.goto("/login");
-      await page.getByLabel(/^E-mail/).fill(adminEmail);
+      await page.getByLabel(/^Matrícula/).fill(adminRegistry);
       await page.getByLabel(/^Senha/).fill(adminPassword);
-      await page.getByRole("button", { name: /Entrar na plataforma/ }).click();
+      await page.getByRole("button", { name: /Entrar/ }).click();
       await expect(page.getByRole("heading", { name: /Olá/ })).toBeVisible();
       const csrfResponse = await page.request.get("/sanctum/csrf-cookie");
       expect(csrfResponse.status()).toBe(204);
@@ -89,7 +89,9 @@ test.describe("Módulo de almoxarifado — papéis operacionais", () => {
         headers: { Accept: "application/json" },
       });
       const userData = await userResponse.json();
-      expect(userData.data.permissions).toEqual(expect.arrayContaining(actor.permissions));
+      expect(userData.data.permissions).toEqual(
+        expect.arrayContaining(actor.permissions),
+      );
 
       if (actor.role === "auditor") {
         await page.goto("/admin/inventory/new");
@@ -99,9 +101,15 @@ test.describe("Módulo de almoxarifado — papéis operacionais", () => {
         await expect(page).toHaveURL(/\/403$/);
       } else {
         await page.goto("/admin/inventory/reports");
-        await expect(page.getByRole("heading", { name: "Relatórios do almoxarifado" })).toBeVisible();
-        await expect(page.getByRole("button", { name: "Exportar CSV" })).toHaveCount(0);
-        await expect(page.getByRole("button", { name: "Exportar XLSX" })).toHaveCount(0);
+        await expect(
+          page.getByRole("heading", { name: "Relatórios do almoxarifado" }),
+        ).toBeVisible();
+        await expect(
+          page.getByRole("button", { name: "Exportar CSV" }),
+        ).toHaveCount(0);
+        await expect(
+          page.getByRole("button", { name: "Exportar XLSX" }),
+        ).toHaveCount(0);
       }
 
       await page.context().clearCookies();

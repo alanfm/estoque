@@ -42,6 +42,7 @@ export function AdminLayout() {
   const desktopNavRef = useRef<{
     expandGroup(moduleName: string): void;
   } | null>(null);
+  const markDesktopNavReady = () => setDesktopNavReady(true);
 
   useEffect(() => {
     window.localStorage.setItem(SIDEBAR_KEY, collapsed ? "1" : "0");
@@ -126,10 +127,15 @@ export function AdminLayout() {
                   </span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => navigate("/password")}>
-                  <KeyRound className="size-4" aria-hidden="true" />
-                  Alterar senha
+                <DropdownMenuItem onSelect={() => navigate("/profile")}>
+                  Meu perfil
                 </DropdownMenuItem>
+                {user?.authentication?.canChangeLocalPassword !== false ? (
+                  <DropdownMenuItem onSelect={() => navigate("/password")}>
+                    <KeyRound className="size-4" aria-hidden="true" />
+                    Alterar senha
+                  </DropdownMenuItem>
+                ) : null}
                 <DropdownMenuItem onSelect={() => void handleLogout()}>
                   <LogOut className="size-4" aria-hidden="true" />
                   Sair
@@ -151,7 +157,7 @@ export function AdminLayout() {
               onToggleGroup={toggleGroup}
               onExpandSidebar={expandSidebarForGroup}
               imperativeRef={desktopNavRef}
-              onReady={() => setDesktopNavReady(true)}
+              onReady={markDesktopNavReady}
               onCollapsedGroupActivate={(moduleName) => {
                 setExpandedGroups((current) =>
                   new Set(current).add(moduleName),

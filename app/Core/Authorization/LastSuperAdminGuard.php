@@ -9,14 +9,16 @@ use Illuminate\Database\Eloquent\Builder;
 
 final class LastSuperAdminGuard
 {
-    public function assertCanRemoveSuperAdmin(User $user): void
+    public function assertCanRemoveSuperAdmin(User $user, bool $wasLocalAdmin = false): void
     {
-        if (! $user->isSuperAdmin()) {
+        if (! $user->isSuperAdmin() || (! $wasLocalAdmin && (! $user->local_auth_enabled || $user->password === null))) {
             return;
         }
 
         $otherSuperAdminExists = User::query()
             ->whereKeyNot($user->getKey())
+            ->where('local_auth_enabled', true)
+            ->whereNotNull('password')
             ->whereHas('roles', fn (Builder $query) => $query->where('slug', Role::SUPER_ADMIN))
             ->exists();
 

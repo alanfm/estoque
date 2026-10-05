@@ -192,6 +192,9 @@ describe("AdminNav", () => {
 
     expect(parent).toHaveFocus();
     expect(onToggleGroup).toHaveBeenCalledWith("customers");
+    expect(
+      screen.getAllByRole("link", { name: "Listar clientes" }),
+    ).toHaveLength(2);
   });
 
   it("exposes the imperative focus operation for collapsed-sidebar restoration", () => {

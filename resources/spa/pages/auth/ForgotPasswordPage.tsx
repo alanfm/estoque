@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router";
 import { Button } from "../../components/actions/Button";
@@ -9,6 +9,7 @@ import { Input } from "../../components/forms/Input";
 import { applyApiError } from "../../lib/formErrors";
 import { useDocumentTitle } from "../../router/guards";
 import { authService } from "../../services/auth/authService";
+import type { AuthOptions } from "../../types/auth";
 
 interface ForgotFormValues {
   email: string;
@@ -18,6 +19,13 @@ export function ForgotPasswordPage() {
   useDocumentTitle("Recuperar senha");
   const [sent, setSent] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
+  const [authOptions, setAuthOptions] = useState<AuthOptions | null>(null);
+  useEffect(() => {
+    void authService
+      .options()
+      .then(setAuthOptions)
+      .catch(() => setAuthOptions(null));
+  }, []);
 
   const {
     register,
@@ -62,8 +70,17 @@ export function ForgotPasswordPage() {
       <div className="space-y-1">
         <h1 className="text-h2">Recuperar senha</h1>
         <p className="text-body-sm text-ink-secondary">
-          Informe seu e-mail para receber um link de redefinição.
+          Informe o e-mail da conta local para receber um link de redefinição.
+          Senhas institucionais devem ser recuperadas com a TI do IFCE.
         </p>
+        {authOptions?.ldapPasswordHelpUrl ? (
+          <a
+            className="text-body-sm text-brand underline"
+            href={authOptions.ldapPasswordHelpUrl}
+          >
+            Recuperar senha institucional
+          </a>
+        ) : null}
       </div>
 
       <FormError message={generalError} />

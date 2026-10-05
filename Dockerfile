@@ -1,9 +1,9 @@
 FROM php:8.5-cli-bookworm AS php-dependencies
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git unzip libicu-dev libzip-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
+    && apt-get install -y --no-install-recommends git unzip libicu-dev libzip-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libldap2-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd intl pdo_mysql zip \
+    && docker-php-ext-install gd ldap intl pdo_mysql zip \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
@@ -32,9 +32,9 @@ ARG RELEASE_VERSION=local
 ARG VCS_REF=unknown
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libicu-dev libzip-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
+    && apt-get install -y --no-install-recommends libicu-dev libzip-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libldap2-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd intl pdo_mysql zip \
+    && docker-php-ext-install gd ldap intl pdo_mysql zip \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www/html

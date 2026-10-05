@@ -86,6 +86,17 @@ class ApiContractTest extends TestCase
         DB::table('users')->insert(['name' => 'Outra', 'email' => 'person@example.test']);
     }
 
+    public function test_generic_service_outage_preserves_the_public_error_contract(): void
+    {
+        Route::get('/api/v1/_contract/unavailable', fn () => abort(503, 'Internal service details'));
+
+        $response = $this->getJson('/api/v1/_contract/unavailable');
+
+        $response->assertStatus(503)->assertJsonPath('error.code', 'SERVICE_UNAVAILABLE')
+            ->assertHeader('Retry-After', '30')->assertDontSee('Internal service details');
+        $this->assertSame($response->headers->get('X-Request-Id'), $response->json('error.requestId'));
+    }
+
     public function test_paginated_resources_use_camel_case_metadata(): void
     {
         $paginator = new LengthAwarePaginator([new JsonResource(['id' => '21'])], 21, 20, 2, ['path' => 'http://localhost:8080/api/v1/example']);

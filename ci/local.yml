@@ -15,6 +15,7 @@ jobs:
       MAILPIT_PORT: 18026
       E2E_BASE_URL: http://localhost:18081
       E2E_ADMIN_EMAIL: admin@example.com
+      E2E_ADMIN_REGISTRY: admin001
       E2E_ADMIN_PASSWORD: senha-de-teste-1234
     steps:
       - name: Checkout local limpo
@@ -58,7 +59,7 @@ jobs:
         run: |
           ./vendor/bin/sail artisan core:sync-permissions
           printf '%s\n%s\n' "$E2E_ADMIN_PASSWORD" "$E2E_ADMIN_PASSWORD" | \
-            ./vendor/bin/sail artisan core:bootstrap-admin "$E2E_ADMIN_EMAIL" "Administrador E2E"
+            ./vendor/bin/sail artisan core:bootstrap-admin "$E2E_ADMIN_REGISTRY" "Administrador E2E" "$E2E_ADMIN_EMAIL"
       - name: End-to-end critical flows
         run: |
           docker compose exec -T --user root -e PLAYWRIGHT_BROWSERS_PATH=/tmp/playwright-browsers laravel.test npx playwright install --with-deps chromium
@@ -99,6 +100,7 @@ jobs:
           VCS_REF: ${{ github.sha }}
           SESSION_SECURE_COOKIE: "false"
           E2E_ADMIN_EMAIL: production-admin@example.test
+          E2E_ADMIN_REGISTRY: productionadmin001
           E2E_ADMIN_PASSWORD: production-test-password-1234
         run: |
           docker compose --project-name starterkit-act-prod -f compose.production.yaml up -d db
@@ -106,15 +108,15 @@ jobs:
           docker compose --project-name starterkit-act-prod -f compose.production.yaml run --rm app php artisan core:sync-permissions
           printf '%s\n%s\n' "$E2E_ADMIN_PASSWORD" "$E2E_ADMIN_PASSWORD" | \
             docker compose --project-name starterkit-act-prod -f compose.production.yaml run --rm -T app \
-              php artisan core:bootstrap-admin "$E2E_ADMIN_EMAIL" "Administrador de smoke test"
+              php artisan core:bootstrap-admin "$E2E_ADMIN_REGISTRY" "Administrador de smoke test" "$E2E_ADMIN_EMAIL"
           docker compose --project-name starterkit-act-prod -f compose.production.yaml up -d --wait app web
           curl --fail --silent --show-error http://localhost:18083/up > /dev/null
           curl --fail --silent --show-error http://localhost:18083/ > /dev/null
           test "$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' http://localhost:18083/login)" = '200'
           test "$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' http://localhost:18083/sanctum/csrf-cookie)" = '204'
-          test "$(curl --silent --show-error --header 'Accept: application/json' --output /dev/null --write-out '%{http_code}' http://localhost:18083/api/v1/customers)" = '401'
+          test "$(curl --silent --show-error --header 'Accept: application/json' --output /dev/null --write-out '%{http_code}' http://localhost:18083/api/v1/inventory/items)" = '401'
           curl --fail --silent --show-error http://localhost:18083/build/manifest.json | \
-            python3 -c 'import json,sys; assert "modules/acme/customers/resources/spa/pages/CustomersPage.tsx" in json.load(sys.stdin)'
+            python3 -c 'import json,sys; assert "modules/acme/inventory/resources/spa/pages/ItemsPage.tsx" in json.load(sys.stdin)'
       - name: Stop containers
         if: always()
         env:

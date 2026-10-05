@@ -21,4 +21,11 @@ final class ResetPasswordRequest extends FormRequest
             'passwordConfirmation' => ['required', 'same:password'],
         ];
     }
+
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->input('email'))) {
+            $this->merge(['email' => mb_strtolower(trim($this->input('email')))]);
+        }
+    }
 }

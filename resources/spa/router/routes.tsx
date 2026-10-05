@@ -3,6 +3,7 @@ import { AdminLayout } from "../layouts/AdminLayout";
 import { AuthLayout } from "../layouts/AuthLayout";
 import { PublicLayout } from "../layouts/PublicLayout";
 import { DashboardPage } from "../pages/DashboardPage";
+import { ProfilePage } from "../pages/ProfilePage";
 import { ChangePasswordPage } from "../pages/auth/ChangePasswordPage";
 import { ForgotPasswordPage } from "../pages/auth/ForgotPasswordPage";
 import { LoginPage } from "../pages/auth/LoginPage";
@@ -44,6 +45,7 @@ export function createRoutes(moduleRoutes: RouteObject[] = []): RouteObject[] {
               children: [
                 { index: true, element: <DashboardPage /> },
                 { path: "password", element: <ChangePasswordPage /> },
+                { path: "profile", element: <ProfilePage /> },
                 {
                   element: <RequirePermission permission="users.viewAny" />,
                   children: [

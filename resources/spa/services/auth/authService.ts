@@ -1,6 +1,7 @@
 import type { ApiResource } from "../../types/api";
 import type {
   ChangePasswordData,
+  AuthOptions,
   ForgotPasswordData,
   LoginCredentials,
   ResetPasswordData,
@@ -9,6 +10,13 @@ import type {
 import { apiRequest } from "../api/client";
 
 export const authService = {
+  async options(signal?: AbortSignal): Promise<AuthOptions> {
+    const response = await apiRequest<ApiResource<AuthOptions>>(
+      "/auth/options",
+      { signal },
+    );
+    return response.data;
+  },
   async login(credentials: LoginCredentials): Promise<SessionUser> {
     const response = await apiRequest<ApiResource<SessionUser>>("/auth/login", {
       method: "POST",
@@ -27,6 +35,17 @@ export const authService = {
       signal,
     });
 
+    return response.data;
+  },
+
+  async syncProfile(password: string): Promise<SessionUser> {
+    const response = await apiRequest<ApiResource<SessionUser>>(
+      "/auth/sync-profile",
+      {
+        method: "POST",
+        body: { password },
+      },
+    );
     return response.data;
   },
 

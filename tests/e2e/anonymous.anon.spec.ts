@@ -27,7 +27,7 @@ test.describe("Acesso anônimo", () => {
 
   test("recusa credenciais inválidas sem enumerar contas", async ({ page }) => {
     await page.goto("/login");
-    await page.getByLabel(/^E-mail/).fill("ninguem@example.com");
+    await page.getByLabel(/^Matrícula/).fill("matricula-inexistente");
     await page.getByLabel(/^Senha/).fill("senha-incorreta");
     await page.getByRole("button", { name: /Entrar/ }).click();
 
