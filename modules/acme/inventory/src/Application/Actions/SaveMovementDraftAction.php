@@ -11,6 +11,7 @@ final class SaveMovementDraftAction
     public function create(int $actorId, array $data): array
     {
         return DB::transaction(function () use ($actorId, $data): array {
+            $data['locationId'] ??= app(ResolveDefaultLocationAction::class)->execute();
             $movementId = DB::table('inventory_movements')->insertGetId([
                 'type' => $data['type'], 'status' => 'DRAFT', 'location_id' => $data['locationId'],
                 'occurred_on' => $data['occurredOn'] ?? null, 'origin' => $data['origin'] ?? null,

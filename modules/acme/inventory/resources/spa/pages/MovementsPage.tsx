@@ -120,17 +120,6 @@ export default function MovementsPage() {
         actions={
           canCreateEntry || canCreateIssue || canAdjust ? (
             <div className="flex flex-wrap gap-2">
-              {canCreateEntry ? (
-                <Button
-                  asChild
-                  className="border-emerald-700 bg-transparent text-emerald-700 hover:border-emerald-800 hover:bg-transparent hover:text-emerald-800"
-                >
-                  <Link to="/admin/inventory/movements/entry">
-                    <Plus className="size-4" aria-hidden="true" />
-                    Nova entrada
-                  </Link>
-                </Button>
-              ) : null}
               {canCreateIssue ? (
                 <Button
                   asChild
@@ -138,7 +127,18 @@ export default function MovementsPage() {
                 >
                   <Link to="/admin/inventory/movements/issue">
                     <Plus className="size-4" aria-hidden="true" />
-                    Nova saída
+                    Nova Saída
+                  </Link>
+                </Button>
+              ) : null}
+              {canCreateEntry ? (
+                <Button
+                  asChild
+                  className="border-emerald-700 bg-transparent text-emerald-700 hover:border-emerald-800 hover:bg-transparent hover:text-emerald-800"
+                >
+                  <Link to="/admin/inventory/movements/entry">
+                    <Plus className="size-4" aria-hidden="true" />
+                    Nova Entrada
                   </Link>
                 </Button>
               ) : null}
@@ -152,7 +152,7 @@ export default function MovementsPage() {
                   }}
                 >
                   <ClipboardCheck className="size-4" aria-hidden="true" />
-                  Contagem de estoque
+                  Contagem de Estoque
                 </Button>
               ) : null}
             </div>

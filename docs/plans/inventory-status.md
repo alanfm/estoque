@@ -203,3 +203,20 @@ Removido `modules/acme/customers`, a dependência Composer `acme/customers`, os 
 A remoção não executa rollback nem exclui tabelas ou dados existentes. O catálogo de permissões obsoletas será atualizado pelo comando normal `core:sync-permissions` na implantação, preservando vínculos históricos. O starterkit de referência permanece intacto.
 
 Verificações após a remoção: suíte PHP completa com 88 testes / 680 assertions; PHPStan, formatação frontend e build com TypeScript aprovados. Diagnóstico lista apenas Inventory 1.0.0 habilitado, sem issues. Manifesto do build verificado sem entradas Customers e com `ItemsPage.tsx` do Inventory.
+
+
+## Resolução automática do local nas movimentações — 05/10/2026
+
+Corrigida a dependência circular da primeira entrada: o formulário de entrada/saída não deriva mais `locationId` de `variant.balances[0]`. Na criação de rascunho, o campo é opcional; quando ausente, o servidor resolve o local padrão TI dentro da transação idempotente. Requisições com local explícito continuam aceitas quando ele existe e está ativo. Atualização de rascunho continua proibindo troca de local.
+
+Uma nova migration inicializa TI com `insertOrIgnore`, preservando cadastro existente. Para instalações antigas onde o cadastro esteja ausente, o mesmo mecanismo cria somente o local ao salvar um rascunho autorizado; não cria saldo, contagem física ou lançamento no livro. Um TI inativo não é reativado silenciosamente. O comando `inventory:install` permanece administrativo, mas deixou de ser pré-requisito para a primeira entrada pela interface. Nenhuma escrita ocorre no boot ou nas leituras do catálogo.
+
+Regressões cobrem primeira entrada sem local/saldo anterior (criação e confirmação idempotentes), saída no TI mesmo quando há saldo em outro local, local padrão inativo, visitante/usuário sem permissão e os dois formulários sem inferência de local a partir dos saldos. O cenário de saída sem saldo revelou uma exceção de domínio que virava HTTP 500 na confirmação: agora retorna conflito 409, como no fluxo de estorno, e a transação não altera o estoque.
+
+Validação: suíte Inventory em MariaDB isolada, 25 testes / 248 assertions; Vitest, 23 arquivos / 94 testes; Pint, PHPStan, Prettier, ESLint, TypeScript e build aprovados. Permanece o aviso conhecido de bundle acima de 500 kB. A migration foi exercitada somente no banco de testes, sem alterações de dados operacionais ou da planilha. E2E não executado nesta correção.
+
+## Correção do carregamento de relatórios — 06/10/2026
+
+A tela enviava `groupBy=item` mesmo na consulta inicial de posição de estoque. A API rejeita agrupamento fora do relatório de consumo com HTTP 422, que a interface apresentava como falha genérica de carregamento. O filtro agora é enviado somente no consumo, tanto na consulta quanto nas exportações, preservando o agrupamento selecionado ao alternar relatórios.
+
+Validação: regressão da tela cobre os quatro relatórios com agrupamento previamente salvo na URL e exportações CSV/XLSX; InventoryReportsTest passou com 5 testes / 65 assertions; ESLint dos arquivos alterados, Prettier e build com TypeScript aprovados. Permanece o aviso conhecido de bundle acima de 500 kB. Nenhum dado operacional foi alterado; E2E não executado.

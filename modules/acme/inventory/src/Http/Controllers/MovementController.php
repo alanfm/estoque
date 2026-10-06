@@ -5,10 +5,12 @@ namespace Acme\Inventory\Http\Controllers;
 use Acme\Inventory\Application\Actions\ExecuteIdempotentOperation;
 use Acme\Inventory\Application\Actions\PostMovementAction;
 use Acme\Inventory\Application\Actions\SaveMovementDraftAction;
+use Acme\Inventory\Domain\Exceptions\InsufficientStock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 final class MovementController
 {
@@ -86,7 +88,13 @@ final class MovementController
             throw ValidationException::withMessages(['idempotencyKey' => 'O header Idempotency-Key deve conter de 1 a 160 caracteres.']);
         }
 
-        return response()->json(['data' => $action->execute($movement, (int) $request->user()->getAuthIdentifier(), (int) $data['version'], $key)]);
+        try {
+            $result = $action->execute($movement, (int) $request->user()->getAuthIdentifier(), (int) $data['version'], $key);
+        } catch (InsufficientStock $exception) {
+            throw new HttpException(409, 'INSUFFICIENT_STOCK', $exception);
+        }
+
+        return response()->json(['data' => $result]);
     }
 
     /** @return array<string, mixed> */
@@ -94,7 +102,7 @@ final class MovementController
     {
         $rules = [
             'type' => [$creating ? 'required' : 'prohibited', Rule::in(['ENTRY', 'ISSUE'])],
-            'locationId' => [$creating ? 'required' : 'sometimes', 'integer', 'exists:inventory_locations,id'],
+            'locationId' => ['sometimes', 'integer', Rule::exists('inventory_locations', 'id')->where('active', true)],
             'occurredOn' => ['nullable', 'date_format:Y-m-d'], 'origin' => ['nullable', Rule::in(['PURCHASE', 'DONATION', 'INITIAL_STOCK', 'RETURN', 'TRANSFER_RECEIPT', 'OTHER'])],
             'serviceOrderNumber' => ['nullable', 'string', 'max:120'], 'documentNumber' => ['nullable', 'string', 'max:120'],
             'description' => ['nullable', 'string', 'max:5000'], 'observations' => ['nullable', 'string', 'max:5000'],

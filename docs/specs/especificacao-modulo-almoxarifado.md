@@ -122,7 +122,7 @@ Campos inaplicáveis ao tipo são rejeitados. OS e documento são strings, pois 
 
 Observações e justificativas com apenas espaços são inválidas. Não há tamanho mínimo arbitrário para comprovar qualidade do texto: o sistema exige conteúdo e o responsável verifica o motivo.
 
-Rascunhos podem ter campos incompletos. POST de criação exige tipo e local; confirmação revalida todos os campos e linhas. Máximo técnico inicial: 100 variantes por movimento. Variante repetida é rejeitada, com orientação para consolidar quantidade.
+Rascunhos podem ter campos incompletos. POST de criação exige tipo; `locationId` pode ser omitido no MVP, caso em que o servidor resolve o local padrão TI sem consultar saldos da variante. Um local explícito precisa existir e estar ativo; confirmação revalida todos os campos e linhas. Máximo técnico inicial: 100 variantes por movimento. Variante repetida é rejeitada, com orientação para consolidar quantidade.
 
 Data de nova operação não pode ser futura em relação ao fuso do host. Retroatividade é permitida; recordedAt/postedAt preservam quando foi registrada. Novas saídas retroativas devem manter saldo não negativo tanto atualmente quanto na sequência histórica por variante.
 
@@ -244,7 +244,7 @@ Estrutura:
 
 Controllers invocáveis por operação. Requests validam formato/autorização; DTOs transportam dados; Actions conduzem regras/transações; Queries fornecem leituras; Resources definem JSON. Não criar dependência do módulo Customers.
 
-A extensão frontend usa somente @starterkit/module-kit para APIs do host, lazy loading e AdminLayout. Instalação/habilitação exige build dos assets do host. Boot não executa carga de dados; local inicial é criado por instalação idempotente.
+A extensão frontend usa somente @starterkit/module-kit para APIs do host, lazy loading e AdminLayout. Instalação/habilitação exige build dos assets do host. Boot não executa carga de dados. Uma migration inicializa o local TI de forma idempotente, preservando um registro existente. Para instalações antigas sem o local, a criação autorizada de rascunho sem `locationId` inicializa esse cadastro dentro da transação; não reativa locais inativos nem cria movimentos/saldos físicos. O comando `inventory:install` permanece como ferramenta administrativa, não como pré-requisito da interface.
 
 ## 10. Autorização
 

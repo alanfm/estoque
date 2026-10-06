@@ -32,7 +32,7 @@ export interface MovementDraft {
 }
 export interface DraftInput {
   type: "ENTRY" | "ISSUE";
-  locationId: string;
+  locationId?: string;
   occurredOn?: string | null;
   origin?: string;
   serviceOrderNumber?: string | null;

@@ -30,7 +30,7 @@ docker compose -f compose.production.yaml build
 1. Fazer e verificar o backup; não executar rollback destrutivo de migrations.
 2. Publicar as imagens da mesma revisão e iniciar banco/app/web isoladamente.
 3. Executar `php artisan migrate --force` no app.
-4. Executar `php artisan inventory:install` e `php artisan core:sync-permissions`.
+4. Executar `php artisan core:sync-permissions`. A migration inicializa o local padrão TI; `inventory:install` permanece disponível para manutenção administrativa, sem ser necessário para registrar a primeira entrada.
 5. Executar `php artisan core:modules:diagnose --json`; corrigir qualquer issue antes de habilitar o módulo.
 6. Construir/publicar os assets da mesma revisão e verificar `/up`, login, `/admin/inventory` e API com `Accept: application/json`.
 7. Habilitar o módulo conforme o mecanismo de estado do core e conferir as permissões dos papéis reais.

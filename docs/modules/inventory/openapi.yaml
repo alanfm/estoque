@@ -35,7 +35,7 @@ paths:
     patch: { tags: [catalog], operationId: configureReplenishment, requestBody: { $ref: '#/components/requestBodies/VersionedJson' }, responses: { '200': { $ref: '#/components/responses/Json' }, '409': { $ref: '#/components/responses/Conflict' } } }
   /movements:
     get: { tags: [movements], operationId: listMovements, parameters: [{ $ref: '#/components/parameters/PerPage' }], responses: { '200': { $ref: '#/components/responses/Json' } } }
-    post: { tags: [movements], operationId: createMovementDraft, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/Json' }, responses: { '201': { $ref: '#/components/responses/Json' }, '422': { $ref: '#/components/responses/Validation' } } }
+    post: { tags: [movements], operationId: createMovementDraft, description: "locationId é opcional; quando omitido usa o local padrão TI, independentemente dos saldos da variante.", parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/Json' }, responses: { '201': { $ref: '#/components/responses/Json' }, '422': { $ref: '#/components/responses/Validation' } } }
   /movements/{movement}:
     parameters: [{ $ref: '#/components/parameters/MovementId' }]
     get: { tags: [movements], operationId: showMovement, responses: { '200': { $ref: '#/components/responses/Json' } } }

@@ -30,7 +30,6 @@ function MovementCreateForm({ type }: { type: "ENTRY" | "ISSUE" }) {
         .map((variant) => ({
           ...variant,
           item,
-          locationId: variant.balances?.[0]?.locationId ?? "",
         })),
     ) ?? [];
 
@@ -40,15 +39,12 @@ function MovementCreateForm({ type }: { type: "ENTRY" | "ISSUE" }) {
     const variant = variants.find(
       (candidate) => candidate.id === String(form.get("variantId")),
     );
-    if (!variant?.locationId) {
-      setMessage(
-        "Variante sem local de estoque. Atualize o catálogo antes de continuar.",
-      );
+    if (!variant) {
+      setMessage("Selecione uma variante válida antes de continuar.");
       return;
     }
     const input: DraftInput = {
       type,
-      locationId: variant.locationId,
       occurredOn: String(form.get("occurredOn")) || null,
       lines: [
         {

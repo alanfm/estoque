@@ -105,8 +105,16 @@ export default function ReportsPage() {
   const categoryId = params.get("categoryId") ?? "";
   const page = Math.max(1, Number(params.get("page") ?? 1) || 1);
   const filters = useMemo(
-    () => ({ from, to, groupBy, itemId, categoryId, page, perPage: 20 }),
-    [from, to, groupBy, itemId, categoryId, page],
+    () => ({
+      from,
+      to,
+      ...(type === "consumption" ? { groupBy } : {}),
+      itemId,
+      categoryId,
+      page,
+      perPage: 20,
+    }),
+    [type, from, to, groupBy, itemId, categoryId, page],
   );
   const loader = useCallback(
     (signal: AbortSignal) => reportsService.report(type, filters, signal),
