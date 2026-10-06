@@ -3,7 +3,7 @@ import {
   type ApiResource,
   type PaginationMeta,
   type Paginated,
-} from "@starterkit/module-kit";
+} from "../support";
 
 export interface ImportBatch {
   id: number;

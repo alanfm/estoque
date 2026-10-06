@@ -3,6 +3,7 @@
 **Raiz obrigatória do projeto:** `~/Projects/estoque`.
 **Referência técnica:** `alanfm/starterkit`, revisão consultada `ff1812f0dbfd95e84243d738768262ca0d36e1af`; o checkout em `~/Projects/starterkit` não é destino de alterações.
 **Atualização da base em 05/10/2026:** incorporadas as mudanças entre `ff1812f0dbfd95e84243d738768262ca0d36e1af` e `63ff5212e183689e14147ebc19a73295c344909d`, do checkout somente leitura em `/home/alan/Projetos/starterkit`. Evidências e orientações de implantação na seção final deste documento.
+**Atualização da base em 06/10/2026:** incorporado o intervalo `63ff5212..419ccbf344a72896254256a1041f3f4c46a79828`; integração com gerenciamento de módulos e painel automático validada na seção final.
 **Estado:** P00 permanece bloqueada pela falha Act registrada; P01 concluída localmente; P02–P09 aceitas pelo usuário para desenvolvimento; P10 em andamento, sem aceite de homologação. A falha Act e as limitações de concorrência/retroatividade permanecem explícitas.
 
 P02 foi iniciada explicitamente pelo usuário antes da resolução do gate P00/P01. Essa decisão não equivale ao aceite do gate anterior; a falha Act segue pendente.
@@ -220,3 +221,31 @@ Validação: suíte Inventory em MariaDB isolada, 25 testes / 248 assertions; Vi
 A tela enviava `groupBy=item` mesmo na consulta inicial de posição de estoque. A API rejeita agrupamento fora do relatório de consumo com HTTP 422, que a interface apresentava como falha genérica de carregamento. O filtro agora é enviado somente no consumo, tanto na consulta quanto nas exportações, preservando o agrupamento selecionado ao alternar relatórios.
 
 Validação: regressão da tela cobre os quatro relatórios com agrupamento previamente salvo na URL e exportações CSV/XLSX; InventoryReportsTest passou com 5 testes / 65 assertions; ESLint dos arquivos alterados, Prettier e build com TypeScript aprovados. Permanece o aviso conhecido de bundle acima de 500 kB. Nenhum dado operacional foi alterado; E2E não executado.
+
+
+## Compatibilidade com o core atualizado — 06/10/2026
+
+Referência somente leitura: `/home/alan/Projetos/starterkit`, revisão `419ccbf344a72896254256a1041f3f4c46a79828`. Incorporadas as alterações desde `63ff5212e183689e14147ebc19a73295c344909d`: gerenciamento administrativo de módulos (API, preflight, validação, permissões e interface), agrupamento de acesso/configurações, formulários administrativos em modais e cards automáticos dos módulos autorizados no painel.
+
+O inventário mantém manifesto 1.0.0 e faixa do core `^1.1.0`, pois a revisão preserva o contrato público 1.1.0. As rotas, migrations, providers, permissões e importações de `@starterkit/module-kit` continuam compatíveis. Preservados os exports locais, formulários do inventário e o campo obrigatório `SessionUser.isSuperAdmin`; o helper compartilhado reconhece esse campo e o papel `super-admin` usado pelo upstream. Os testes administrativos novos exercitam o pacote Inventory existente, incluindo remoção em host temporário com preservação de uma categoria sintética no banco de testes. O módulo Customers não foi reinstalado.
+
+Regressão com o manifesto frontend real confirma que o painel apresenta apenas os atalhos autorizados e todos os atalhos para a sessão superadministradora. Testes do gerenciador simulam os processos externos; não houve instalação ou remoção real de pacotes pela API.
+
+Validação via Sail: suíte PHP completa **107 testes / 780 assertions**; frontend **28 arquivos / 111 testes**; PHPStan, Pint, Prettier, ESLint, TypeScript e build aprovados. `core:modules:validate inventory` aprovado; `core:modules:diagnose` lista somente Inventory habilitado, sem problemas. Sincronização local do catálogo: 5 permissões criadas, 33 atualizadas e 5 obsoletas, preservando vínculos. Nenhuma planilha ou dado de estoque operacional foi importado ou alterado.
+
+Na implantação, executar `core:sync-permissions` e reconstruir os assets/imagem. O gerenciamento mutável permanece habilitado por padrão somente no ambiente local; consultar `docs/module-management.md`. A imagem de produção continua imutável. Não há migration nova nesta atualização. E2E, instalação real via GitHub e workflow Act não executados; permanecem as limitações operacionais anteriores e o aviso conhecido de bundle acima de 500 kB.
+
+
+## Pacote independente e contrato de instalação — 06/10/2026
+
+A validação anterior da revisão do core cobria o host estoque, que oferece exports adicionais de `module-kit`. A comparação com o Starterkit upstream `419ccbf344a72896254256a1041f3f4c46a79828` revelou que esses exports não estavam disponíveis para instalação independente. Esse impedimento foi corrigido no pacote, sem alterar o checkout de referência.
+
+O frontend Inventory agora importa do host apenas os componentes básicos e `useSession` já publicados. Tabelas, modais, helpers de permissão, tipos, hook assíncrono e transporte HTTP restrito a `/inventory/*` pertencem ao pacote em `resources/spa/support`. O transporte preserva CSRF, sessão same-origin, envelopes, FormData, download e repetição única de escrita somente com `Idempotency-Key`. Regressões cobrem esses comportamentos. Não existe importação de código frontend interno do host nem exigência de copiar extensões locais para o destino.
+
+Corrigido o autoload PSR-4 de `Acme\Inventory\Database\Factories\`, necessário para `InventoryCategory::factory()` quando instalado como dependência Composer. Lockfile local atualizado somente nos metadados do pacote. Manifesto e versão continuam 1.0.0 / core `^1.1.0`, compatíveis com a revisão upstream testada.
+
+Distribuição: `scripts/export-inventory.mjs`, executado por `./vendor/bin/sail node scripts/export-inventory.mjs`, exporta somente `modules/acme/inventory`, rejeita links simbólicos e destinos já existentes e produz pasta e `.tar.gz` com `composer.json` e `module.json` na raiz. Artefatos em `storage/app/inventory-distribution/` são locais e ignorados pelo Git. O README do pacote explica a publicação da raiz em repositório GitHub próprio, instalação pelo painel/manual, pré-requisitos GD/ZIP e produção imutável. Não foi criado/publicado repositório remoto e o repositório da aplicação inteira não deve ser informado ao instalador.
+
+Evidência independente: snapshot de `git archive 419ccbf` em `storage/app/inventory-portability/host`, mantendo o core intacto e o módulo Customers upstream. A distribuição foi instalada por Composer (`require acme/inventory:^1.0 --no-scripts --no-plugins`), com vendor próprio, seguida de `package:discover`. `core:modules:diagnose --json` reporta Customers e Inventory habilitados sem issues. A suíte do pacote nesse host passou: **27 testes / 254 assertions**, incluindo migrations em MariaDB de testes, preflight, provider, factory e operações de catálogo/livro/relatórios/importação sintética. Build completo com TypeScript também passou; somente dependências npm foram compartilhadas com o ambiente Sail, sem alterar os arquivos do core.
+
+No estoque: frontend **29 arquivos / 123 testes**, suíte PHP completa **108 testes / 783 assertions** antes da última regressão de preflight, seguida de `InventoryInstallationContractTest` **2 testes / 6 assertions**. PHPStan, Pint, Prettier, ESLint, TypeScript e build aprovados. O aviso conhecido de bundle acima de 500 kB permanece. Não foram executados E2E, clone real via API/GitHub ou instalação em produção. GD e ZIP devem estar presentes na etapa Composer e no runtime do host de destino; a imagem upstream precisa de adequação de ambiente para PhpSpreadsheet. Nenhum dado operacional ou planilha real foi alterado/importado; o snapshot de referência permanece intacto.

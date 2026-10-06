@@ -3,21 +3,24 @@ import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router";
 import {
   Alert,
-  Badge,
   Button,
+  EmptyState,
+  ErrorState,
+  Field,
+  Input,
+  PageHeader,
+  Spinner,
+  useSession,
+} from "@starterkit/module-kit";
+import {
+  Badge,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  EmptyState,
-  ErrorState,
-  Field,
-  Input,
-  PageHeader,
   SimpleTooltip,
-  Spinner,
   Select,
   Table,
   TableBody,
@@ -29,8 +32,7 @@ import {
   Textarea,
   can,
   useAsync,
-  useSession,
-} from "@starterkit/module-kit";
+} from "../support";
 import { labeled, movementStatusLabels, movementTypeLabels } from "../labels";
 import { catalogService } from "../services/catalogService";
 import { movementService } from "../services/movementService";

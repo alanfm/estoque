@@ -3,12 +3,12 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router";
 import { afterEach, expect, test, vi } from "vitest";
-import { useAsync } from "@starterkit/module-kit";
+import { useAsync } from "../support";
 import { movementService } from "../services/movementService";
 import { EntryCreatePage, IssueCreatePage } from "./MovementCreatePage";
 
-vi.mock("@starterkit/module-kit", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@starterkit/module-kit")>()),
+vi.mock("../support", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../support")>()),
   useAsync: vi.fn(),
   FormModal: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));

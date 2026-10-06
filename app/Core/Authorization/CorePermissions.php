@@ -32,6 +32,11 @@ final class CorePermissions
     private static function catalog(): array
     {
         return [
+            'modules.viewAny' => 'Listar módulos instalados',
+            'modules.install' => 'Instalar módulos do GitHub',
+            'modules.remove' => 'Remover módulos',
+            'modules.enable' => 'Habilitar módulos',
+            'modules.disable' => 'Desabilitar módulos',
             'users.viewAny' => 'Listar usuários',
             'users.view' => 'Visualizar usuário',
             'users.create' => 'Criar usuário',

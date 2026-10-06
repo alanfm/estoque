@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router";
 import { Button } from "../../components/actions/Button";
 import { FormError } from "../../components/feedback/FormError";
 import { CheckboxField } from "../../components/forms/CheckboxField";
@@ -23,7 +22,7 @@ export interface UserFormValues {
 export interface UserFormProps {
   defaultValues: UserFormValues;
   submitLabel: string;
-  cancelTo: string;
+  onCancel(): void;
   roles: Role[];
   rolesAvailable: boolean;
   rolesLoading: boolean;
@@ -34,7 +33,7 @@ export interface UserFormProps {
 export function UserForm({
   defaultValues,
   submitLabel,
-  cancelTo,
+  onCancel,
   roles,
   rolesAvailable,
   rolesLoading,
@@ -161,8 +160,13 @@ export function UserForm({
         <Button type="submit" loading={isSubmitting}>
           {submitLabel}
         </Button>
-        <Button asChild variant="secondary">
-          <Link to={cancelTo}>Cancelar</Link>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
+          Cancelar
         </Button>
       </div>
     </form>

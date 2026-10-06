@@ -209,3 +209,7 @@ Uma especificação OpenAPI DEVERIA ser gerada ou mantida junto da implementaç�
 ### Evolução especificada da autenticação
 
 A [SPEC-002](specs/local-ldap-authentication.md#contrato-http) implementa `GET /api/v1/auth/options` e login por `registry`/`password`; `provider` omitido assume `auto`, com `local|ldap` ainda disponíveis para clientes explícitos. Matrículas ausentes podem ser provisionadas por um login LDAP válido, sem papéis. Resources da sessão incluem `accountSource`, `registry` e `ldapSyncedAt`; Resources administrativos incluem `accountSource`. `POST /api/v1/auth/sync-profile` recebe `password`, exige sessão, CSRF e conta administrada pelo LDAP, e retorna o perfil atualizado. Conflitos de identidade/e-mail retornam `409 CONFLICT`, sem fusão automática. Dados institucionais protegidos retornam `422` quando alterados manualmente. O corpo legado `{email,password}` deve migrar; e-mail permanece nos fluxos de contato e recuperação. A versão de publicação precisa refletir as mudanças incompatíveis de autenticação/provisionamento, conforme a política de compatibilidade.
+
+## Módulos do core
+
+A administração de módulos usa `/api/v1/admin/modules`, com permissões independentes para listagem, instalação, habilitação, desabilitação e remoção. Consulte o [contrato dos endpoints](module-management.md#api). As mutações são síncronas e retornam `204` somente após as etapas operacionais; incompatibilidades e impedimentos retornam `422` com `details.fields` no envelope padrão.

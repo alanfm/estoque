@@ -3,6 +3,7 @@ import {
   ChevronRight,
   LayoutDashboard,
   ShieldCheck,
+  Settings,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -12,6 +13,7 @@ import { resolveModuleGroupIcon, resolveModuleIcon } from "../../lib/icons";
 import { can } from "../../lib/permissions";
 import { cn } from "../../lib/utils";
 import { useModules } from "../../modules/ModulesContext";
+import type { RegisteredModuleNavigationGroup } from "../../modules/types";
 import type { SessionUser } from "../../types/auth";
 import { deriveModuleNavigation } from "./moduleNavigation";
 
@@ -25,19 +27,44 @@ interface NavItem {
 
 const workspaceItems: NavItem[] = [
   { to: "/", label: "Painel", icon: LayoutDashboard, end: true },
-  {
-    to: "/admin/users",
-    label: "Usuários",
-    icon: Users,
-    permission: "users.viewAny",
-  },
-  {
-    to: "/admin/roles",
-    label: "Papéis",
-    icon: ShieldCheck,
-    permission: "roles.viewAny",
-  },
 ];
+
+const accessGroup: RegisteredModuleNavigationGroup = {
+  moduleName: "core/access",
+  label: "Acesso",
+  order: 0,
+  registrationOrder: 0,
+  items: [
+    {
+      to: "/admin/users",
+      label: "Usuários",
+      icon: "Users",
+      permission: "users.viewAny",
+    },
+    {
+      to: "/admin/roles",
+      label: "Papéis",
+      icon: "ShieldCheck",
+      permission: "roles.viewAny",
+    },
+  ],
+};
+
+const settingsGroup: RegisteredModuleNavigationGroup = {
+  moduleName: "core/settings",
+  label: "Configurações",
+  icon: "Settings",
+  order: 1,
+  registrationOrder: 1,
+  items: [
+    {
+      to: "/admin/modules",
+      label: "Módulos",
+      icon: "Package",
+      permission: "modules.viewAny",
+    },
+  ],
+};
 
 export function AdminNav({
   user,
@@ -80,7 +107,7 @@ export function AdminNav({
   }, [onReady]);
   const visible = deriveModuleNavigation({
     navigation,
-    navigationGroups,
+    navigationGroups: [accessGroup, settingsGroup, ...navigationGroups],
     user,
     pathname,
   });
@@ -167,7 +194,12 @@ export function AdminNav({
           );
         })}
         {visible.groups.map((group) => {
-          const Icon = resolveModuleGroupIcon(group.icon);
+          const isAccessGroup = group.moduleName === accessGroup.moduleName;
+          const Icon = isAccessGroup
+            ? ShieldCheck
+            : group.moduleName === settingsGroup.moduleName
+              ? Settings
+              : resolveModuleGroupIcon(group.icon);
           const isOpen = expanded.has(group.moduleName);
           const isActive = Boolean(group.activeItem);
           const listId = `module-nav-${instance}-${group.moduleName.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
@@ -235,7 +267,11 @@ export function AdminNav({
                     {renderLink(
                       {
                         ...item,
-                        icon: resolveModuleIcon(item.icon),
+                        icon: isAccessGroup
+                          ? item.icon === "Users"
+                            ? Users
+                            : ShieldCheck
+                          : resolveModuleIcon(item.icon),
                         active: item.active,
                       },
                       item.to,

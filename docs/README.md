@@ -24,6 +24,7 @@ Este diretório define o contrato arquitetural, visual e operacional para aplica
 - Cada módulo backend é um pacote Composer.
 - Cada módulo declara `type: starterkit-module` e um `module.json` versionado (`schemaVersion`), validado pelo núcleo antes da ativação.
 - O provider de cada módulo estende `App\Core\Modules\ModuleServiceProvider`; a base só carrega rotas, migrations e traduções quando o módulo está habilitado e válido.
+- O core oferece Configurações → Módulos para adicionar por GitHub, remover, habilitar e desabilitar no host de desenvolvimento/build; consulte [gerenciamento de módulos](module-management.md).
 - O estado de habilitação fica em `storage/app/modules.json`; desabilitar um módulo preserva dados e vínculos de permissão.
 - O código React de cada módulo é compilado junto com a SPA do host durante a implantação.
 - Em produção, PHP-FPM e Nginx executam como serviços separados em imagens construídas do mesmo código; MariaDB e estado de módulos persistem em volumes externos.

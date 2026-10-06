@@ -1,3 +1,4 @@
+import userEvent from "@testing-library/user-event";
 import { screen } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { renderWithProviders } from "../../test/renderWithProviders";
@@ -66,15 +67,39 @@ describe("UsersListPage", () => {
       email: "admin@example.com",
       roles: ["super-admin"],
       permissions: ["users.viewAny", "users.create", "users.update"],
-      isSuperAdmin: false,
+      isSuperAdmin: true,
     });
 
     renderWithProviders(<UsersListPage />, { route: "/admin/users" });
 
     expect(await screen.findByText("Ana Souza")).toBeInTheDocument();
     expect(
-      await screen.findByRole("link", { name: /Criar usuário/ }),
+      await screen.findByRole("button", { name: /Criar usuário/ }),
     ).toBeInTheDocument();
+  });
+
+  test("abre criação em modal e cancela sem salvar", async () => {
+    mockedAuth.currentUser.mockResolvedValue({
+      id: 9,
+      name: "Admin",
+      email: "admin@example.com",
+      roles: [],
+      isSuperAdmin: false,
+      permissions: ["users.viewAny", "users.create"],
+    });
+    renderWithProviders(<UsersListPage />, {
+      route: "/admin/users?search=ana",
+    });
+    await userEvent.click(
+      await screen.findByRole("button", { name: /Criar usuário/ }),
+    );
+    expect(
+      await screen.findByRole("dialog", { name: "Criar usuário" }),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(mockedUsers.create).not.toHaveBeenCalled();
+    expect(screen.getByRole("searchbox")).toHaveValue("ana");
   });
 
   test("esconde criação sem permissão", async () => {
@@ -90,6 +115,6 @@ describe("UsersListPage", () => {
     renderWithProviders(<UsersListPage />, { route: "/admin/users" });
 
     expect(await screen.findByText("Ana Souza")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /Criar usuário/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Criar usuário/ })).toBeNull();
   });
 });

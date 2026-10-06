@@ -1,8 +1,4 @@
-import {
-  apiDownload,
-  apiRequest,
-  type Paginated,
-} from "@starterkit/module-kit";
+import { apiDownload, apiRequest, type Paginated } from "../support";
 
 export type ReportType =
   "stock" | "replenishment" | "consumption" | "adjustments";

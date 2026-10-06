@@ -9,9 +9,12 @@ import {
   Field,
   Input,
   PageHeader,
+  Spinner,
+  useSession,
+} from "@starterkit/module-kit";
+import {
   Pagination,
   Select,
-  Spinner,
   Table,
   TableBody,
   TableCell,
@@ -21,8 +24,7 @@ import {
   TableWrapper,
   can,
   useAsync,
-  useSession,
-} from "@starterkit/module-kit";
+} from "../support";
 import {
   labeled,
   movementTypeLabels,

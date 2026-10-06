@@ -6,6 +6,8 @@
 /public/build/
 /storage/*.key
 /storage/app/modules.json
+/storage/app/module-management.lock
+/storage/app/module-install-*/
 /storage/logs/*
 !/storage/logs/.gitignore
 /storage/framework/cache/*
@@ -20,3 +22,6 @@
 /playwright-report/
 /tests/e2e/.auth/
 /.phpunit.result.cache
+
+/storage/app/inventory-distribution/
+/storage/app/inventory-portability/

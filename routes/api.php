@@ -21,6 +21,11 @@ use App\Core\Authorization\Http\Controllers\StoreUserController;
 use App\Core\Authorization\Http\Controllers\UpdateRoleController;
 use App\Core\Authorization\Http\Controllers\UpdateUserController;
 use App\Core\Http\Controllers\ShowSystemStatusController;
+use App\Core\Modules\Http\Controllers\DisableModuleController;
+use App\Core\Modules\Http\Controllers\EnableModuleController;
+use App\Core\Modules\Http\Controllers\InstallModuleController;
+use App\Core\Modules\Http\Controllers\ListModulesController;
+use App\Core\Modules\Http\Controllers\RemoveModuleController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/system/status', ShowSystemStatusController::class);
@@ -57,4 +62,12 @@ Route::middleware(['web', 'auth:sanctum'])->prefix('admin')->name('admin.')->gro
     Route::delete('/roles/{role}', DeleteRoleController::class)->name('roles.destroy');
 
     Route::get('/permissions', ListPermissionsController::class)->name('permissions.index');
+});
+
+Route::middleware(['web', 'auth:sanctum'])->prefix('admin/modules')->name('admin.modules.')->group(function (): void {
+    Route::get('/', ListModulesController::class)->name('index');
+    Route::post('/', InstallModuleController::class)->name('install');
+    Route::post('/{module}/enable', EnableModuleController::class)->name('enable');
+    Route::post('/{module}/disable', DisableModuleController::class)->name('disable');
+    Route::delete('/{module}', RemoveModuleController::class)->name('remove');
 });

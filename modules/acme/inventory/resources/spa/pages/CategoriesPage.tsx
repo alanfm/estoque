@@ -2,21 +2,24 @@ import { Pencil, Plus, Power, Tags } from "lucide-react";
 import { useCallback, useState } from "react";
 import {
   Alert,
-  Badge,
   Button,
+  EmptyState,
+  ErrorState,
+  Field,
+  Input,
+  PageHeader,
+  Spinner,
+  useSession,
+} from "@starterkit/module-kit";
+import {
+  Badge,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  EmptyState,
-  ErrorState,
-  Field,
-  Input,
-  PageHeader,
   SimpleTooltip,
-  Spinner,
   Textarea,
   Table,
   TableBody,
@@ -27,8 +30,7 @@ import {
   TableWrapper,
   can,
   useAsync,
-  useSession,
-} from "@starterkit/module-kit";
+} from "../support";
 import { catalogService, type Category } from "../services/catalogService";
 
 export default function CategoriesPage() {

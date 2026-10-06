@@ -159,6 +159,8 @@ O módulo distribui o código-fonte React e TypeScript indicado por `frontendEnt
 
 `navigationGroup`, quando presente, agrupa os itens declarados em `navigation` e registrados por `registerNavigation()` sob o nome de negócio do módulo (`displayName`, com fallback para `name`). O núcleo preserva também `FrontendModuleRegistry.navigation` como projeção plana para compatibilidade; módulos sem `navigationGroup` mantêm os links planos. O campo aceita `icon` e `order`; itens filhos mantêm seus próprios `to`, `label`, `permission`, `end` e `order`. A hierarquia suporta dois níveis, e grupos sem filhos autorizados são ocultados.
 
+O painel inicial gera automaticamente um card por módulo registrado com links autorizados. O registro preserva a navegação e as rotas de cada módulo, incluindo contribuições dos callbacks e módulos sem `navigationGroup`. Cada link exige sua permissão de navegação e, quando corresponde a uma rota registrada, todas as condições de permissão dessa rota. Cards sem links autorizados são ocultados. A decisão usa as permissões efetivas da sessão, com exceção do papel `super-admin`, cujo bypass centralizado autoriza todos os links dos módulos registrados. Links sem restrições declaradas ficam disponíveis aos usuários autenticados. Não é necessário editar o painel para incluir novos módulos.
+
 Módulos que usam esse campo devem exigir núcleo `^1.1.0` ou superior e reconstruir os assets do host. O manifesto não muda de schema. Veja a [SPEC-001](specs/module-sidebar-navigation.md) para comportamento visual e acessibilidade.
 
 ## API pública do módulo
@@ -238,3 +240,7 @@ Um módulo distribuível DEVE conter:
 - Documentação de instalação e configuração.
 - Changelog.
 - Matriz de compatibilidade.
+
+## Administração pelo core
+
+O core implementa Configurações → Módulos com operações administrativas descritas em [gerenciamento de módulos](module-management.md). Um módulo instalado por essa interface começa desabilitado. O preflight valida manifestos e requisitos sem carregar providers do pacote; `core:modules:validate {name}` valida o pacote instalado sem alterar seu estado. Habilitar executa migrations, build e sincronização de permissões. Remover o pacote preserva dados e atribuições; não equivale a rollback de migrations. Instalação e mudanças de estado no painel exigem host mutável com ferramentas de build; produção continua usando imagens imutáveis.

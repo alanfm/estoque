@@ -1,9 +1,16 @@
 import type { SessionUser } from "../types/auth";
 
-export function can(user: SessionUser | null, permission: string): boolean {
+/** Exceção centralizada, equivalente ao bypass do Gate no backend. */
+export function isSuperAdmin(user: SessionUser | null): boolean {
   return (
     user?.isSuperAdmin === true ||
-    (user?.permissions.includes(permission) ?? false)
+    (user?.roles?.includes("super-admin") ?? false)
+  );
+}
+
+export function can(user: SessionUser | null, permission: string): boolean {
+  return (
+    isSuperAdmin(user) || (user?.permissions.includes(permission) ?? false)
   );
 }
 
@@ -11,12 +18,18 @@ export function canAny(
   user: SessionUser | null,
   permissions: readonly string[],
 ): boolean {
-  return permissions.some((permission) => can(user, permission));
+  return (
+    isSuperAdmin(user) ||
+    permissions.some((permission) => can(user, permission))
+  );
 }
 
 export function canAll(
   user: SessionUser | null,
   permissions: readonly string[],
 ): boolean {
-  return permissions.every((permission) => can(user, permission));
+  return (
+    isSuperAdmin(user) ||
+    permissions.every((permission) => can(user, permission))
+  );
 }

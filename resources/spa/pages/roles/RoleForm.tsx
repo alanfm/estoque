@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router";
 import { Button } from "../../components/actions/Button";
 import { Alert } from "../../components/feedback/Alert";
 import { FormError } from "../../components/feedback/FormError";
@@ -21,7 +20,7 @@ export interface RoleFormValues {
 export interface RoleFormProps {
   defaultValues: RoleFormValues;
   submitLabel: string;
-  cancelTo: string;
+  onCancel(): void;
   permissions: Permission[];
   permissionsAvailable: boolean;
   permissionsLoading: boolean;
@@ -34,7 +33,7 @@ export interface RoleFormProps {
 export function RoleForm({
   defaultValues,
   submitLabel,
-  cancelTo,
+  onCancel,
   permissions,
   permissionsAvailable,
   permissionsLoading,
@@ -124,11 +123,14 @@ export function RoleForm({
           <Spinner label="Carregando permissões" />
         ) : permissionsAvailable ? (
           groups.map(([module, items]) => (
-            <div key={module} className="space-y-2 sm:col-span-2">
-              <p className="text-caption font-semibold uppercase tracking-wide text-ink-muted">
-                {module}
-              </p>
-              <div className="grid gap-2 sm:grid-cols-2">
+            <details
+              key={module}
+              className="rounded-md border border-line p-3 sm:col-span-2"
+            >
+              <summary className="cursor-pointer text-body-sm font-semibold focus-visible:outline-2 focus-visible:outline-focus">
+                {module} ({items.length})
+              </summary>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {items.map((permission) => (
                   <CheckboxField
                     key={permission.name}
@@ -141,7 +143,7 @@ export function RoleForm({
                   />
                 ))}
               </div>
-            </div>
+            </details>
           ))
         ) : null}
       </CheckboxGroup>
@@ -150,8 +152,13 @@ export function RoleForm({
         <Button type="submit" loading={isSubmitting} disabled={disabled}>
           {submitLabel}
         </Button>
-        <Button asChild variant="secondary">
-          <Link to={cancelTo}>Cancelar</Link>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
+          Cancelar
         </Button>
       </div>
     </form>

@@ -1,6 +1,9 @@
+import { RoleCreateForm } from "./RoleCreateForm";
+import { RoleEditForm } from "./RoleEditForm";
+import { Dialog, DialogContent } from "../../components/overlays/Dialog";
 import { Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import { Button } from "../../components/actions/Button";
 import { Alert } from "../../components/feedback/Alert";
 import { EmptyState } from "../../components/feedback/EmptyState";
@@ -42,7 +45,10 @@ export function RolesListPage() {
   const [deleteTarget, setDeleteTarget] = useState<Role | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-  const flash = useFlash();
+  const initialFlash = useFlash();
+  const [success, setSuccess] = useState<string | null>(null);
+  const flash = success ?? initialFlash;
+  const [formTarget, setFormTarget] = useState<string | null>(null);
 
   const loader = useCallback(
     (signal: AbortSignal) =>
@@ -107,11 +113,9 @@ export function RolesListPage() {
         breadcrumbs={[{ label: "Painel", to: "/" }, { label: "Papéis" }]}
         actions={
           can(user, "roles.create") ? (
-            <Button asChild>
-              <Link to="/admin/roles/new">
-                <Plus className="size-4" aria-hidden="true" />
-                Criar papel
-              </Link>
+            <Button onClick={() => setFormTarget("new")}>
+              <Plus className="size-4" aria-hidden="true" />
+              Criar papel
             </Button>
           ) : null
         }
@@ -192,15 +196,16 @@ export function RolesListPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="inline-flex items-center gap-1">
-                        {can(user, "roles.update") ? (
+                        {can(user, "roles.view") &&
+                        can(user, "roles.update") ? (
                           <SimpleTooltip label="Editar">
-                            <Button asChild variant="ghost" size="iconCompact">
-                              <Link
-                                to={`/admin/roles/${item.id}`}
-                                aria-label={`Editar ${item.name}`}
-                              >
-                                <Pencil className="size-4" aria-hidden="true" />
-                              </Link>
+                            <Button
+                              variant="ghost"
+                              size="iconCompact"
+                              onClick={() => setFormTarget(String(item.id))}
+                              aria-label={`Editar ${item.name}`}
+                            >
+                              <Pencil className="size-4" aria-hidden="true" />
                             </Button>
                           </SimpleTooltip>
                         ) : null}
@@ -228,6 +233,37 @@ export function RolesListPage() {
           <Pagination meta={data.meta} onPageChange={changePage} />
         </div>
       ) : null}
+
+      <Dialog
+        open={formTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setFormTarget(null);
+        }}
+      >
+        <DialogContent className="max-w-3xl max-h-[calc(100dvh-2rem)] overflow-y-auto">
+          {formTarget === "new" ? (
+            <RoleCreateForm
+              onCancel={() => setFormTarget(null)}
+              onSaved={(message) => {
+                setSuccess(message);
+                setFormTarget(null);
+                reload();
+              }}
+            />
+          ) : formTarget !== null ? (
+            <RoleEditForm
+              key={formTarget}
+              id={formTarget}
+              onCancel={() => setFormTarget(null)}
+              onSaved={(message) => {
+                setSuccess(message);
+                setFormTarget(null);
+                reload();
+              }}
+            />
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={deleteTarget !== null}

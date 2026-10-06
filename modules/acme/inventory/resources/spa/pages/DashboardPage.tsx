@@ -17,10 +17,9 @@ import {
   Input,
   PageHeader,
   Spinner,
-  can,
-  useAsync,
   useSession,
 } from "@starterkit/module-kit";
+import { can, useAsync } from "../support";
 import { situationLabels, unitLabels } from "../labels";
 import { reportsService } from "../services/reportsService";
 

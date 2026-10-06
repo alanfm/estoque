@@ -51,6 +51,11 @@ export interface ModuleEntry {
 export interface RegisteredModule {
   name: string;
   displayName: string;
+  /** Navegação do módulo, incluindo contribuições de registerNavigation. */
+  navigation?: ModuleNavigationItem[];
+  routes?: ModuleRoute[];
+  icon?: string;
+  order?: number;
 }
 
 /** Projeção de navegação agrupada, mantendo a lista plana legada. */

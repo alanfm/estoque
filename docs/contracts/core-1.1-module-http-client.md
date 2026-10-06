@@ -2,6 +2,8 @@
 
 **Estado:** contrato implementado e verificado localmente; não representa publicação de release/tag.
 
+**Escopo:** extensões do host estoque; este documento não garante que todos os exports abaixo existam no Starterkit upstream 1.1.0. O pacote Inventory instalável usa somente os exports upstream existentes e mantém seu transporte HTTP, tipos e componentes adicionais em `resources/spa/support`, sem modificar o host de destino.
+
 Frontends de módulos importam a superfície de host exclusivamente de `@starterkit/module-kit`. Não importam caminhos internos de `resources/spa`.
 
 ## Exports

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { can, canAll, canAny } from "./permissions";
+import { can, canAll, canAny, isSuperAdmin } from "./permissions";
 import type { SessionUser } from "../types/auth";
 
 const user: SessionUser = {
@@ -12,6 +12,17 @@ const user: SessionUser = {
 };
 
 describe("helpers de permissão", () => {
+  test("centraliza o bypass de super-admin mesmo sem catálogo de permissões", () => {
+    const superAdmin = { ...user, roles: ["super-admin"], permissions: [] };
+    expect(isSuperAdmin(superAdmin)).toBe(true);
+    expect(isSuperAdmin(user)).toBe(false);
+    expect(isSuperAdmin(null)).toBe(false);
+    expect(can(superAdmin, "module.view")).toBe(true);
+    expect(canAny(superAdmin, ["module.view"])).toBe(true);
+    expect(canAny(superAdmin, [])).toBe(true);
+    expect(canAll(superAdmin, ["module.view", "module.edit"])).toBe(true);
+  });
+
   test("can verifica uma permissão presente", () => {
     expect(can(user, "users.create")).toBe(true);
     expect(can(user, "users.delete")).toBe(false);

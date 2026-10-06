@@ -1,13 +1,6 @@
 import MovementsPage from "./MovementsPage";
-import {
-  FormModal,
-  Button,
-  Field,
-  Input,
-  Select,
-  Textarea,
-  useAsync,
-} from "@starterkit/module-kit";
+import { Button, Field, Input } from "@starterkit/module-kit";
+import { FormModal, Select, Textarea, useAsync } from "../support";
 import { useCallback, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { catalogService } from "../services/catalogService";

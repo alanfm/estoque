@@ -1,8 +1,4 @@
-import {
-  apiRequest,
-  type ApiResource,
-  type Paginated,
-} from "@starterkit/module-kit";
+import { apiRequest, type ApiResource, type Paginated } from "../support";
 
 export interface Category {
   id: string;

@@ -9,6 +9,7 @@ use App\Core\Modules\Console\DisableModuleCommand;
 use App\Core\Modules\Console\EnableModuleCommand;
 use App\Core\Modules\Console\ListModulesCommand;
 use App\Core\Modules\Console\ModuleEntriesCommand;
+use App\Core\Modules\Console\ValidateModuleCommand;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -33,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
         EnableModuleCommand::class,
         DisableModuleCommand::class,
         ModuleEntriesCommand::class,
+        ValidateModuleCommand::class,
     ])
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

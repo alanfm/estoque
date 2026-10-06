@@ -139,3 +139,5 @@ Antes de publicar uma nova versão do núcleo, a suíte deve instalar e testar p
 ## Evolução especificada: autenticação local e LDAP
 
 A [SPEC-002](specs/local-ldap-authentication.md) é candidata a MINOR por preservar login local legado, sessão e permissões, adicionando campos opcionais e Resources aditivos. A versão candidata ainda não foi publicada. Testes locais de compatibilidade passaram; tornar matrícula ou `provider` obrigatórios no login local seria quebra de contrato.
+
+O gerenciamento pelo core aplica essa política no preflight, antes da instalação Composer, e novamente antes da habilitação. Um pacote incompatível é rejeitado com os motivos no campo `repository` da resposta `422`; consulte [gerenciamento de módulos](module-management.md).

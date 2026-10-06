@@ -98,6 +98,10 @@ export async function createModuleRegistry(
     modules.push({
       name: module.name,
       displayName: module.displayName ?? module.name,
+      navigation: sortedModuleNavigation,
+      routes: moduleRoutes,
+      icon: module.navigationGroup?.icon,
+      order: module.navigationGroup?.order ?? 100,
     });
   }
 

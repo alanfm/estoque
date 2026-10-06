@@ -110,6 +110,59 @@ function renderNav({
 }
 
 describe("AdminNav", () => {
+  it("groups core access pages and opens the group on nested routes", () => {
+    const onToggleGroup = vi.fn();
+    renderNav({
+      pathname: "/admin/users/1",
+      permissions: ["users.viewAny", "roles.viewAny"],
+      expanded: new Set(["core/access"]),
+      onToggleGroup,
+    });
+
+    const parent = screen.getByRole("button", { name: "Acesso" });
+    const children = document.getElementById(
+      parent.getAttribute("aria-controls")!,
+    );
+    expect(children).toContainElement(
+      screen.getByRole("link", { name: "Usuários" }),
+    );
+    expect(children).toContainElement(
+      screen.getByRole("link", { name: "Papéis" }),
+    );
+    expect(screen.getByRole("link", { name: "Usuários" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
+  it("filters access children by permission and opens their active group", () => {
+    const onToggleGroup = vi.fn();
+    renderNav({
+      pathname: "/admin/roles/new",
+      permissions: ["roles.viewAny"],
+      expanded: new Set(["core/access"]),
+    });
+    expect(screen.getByRole("button", { name: "Acesso" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Papéis" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Usuários" }),
+    ).not.toBeInTheDocument();
+
+    renderNav({
+      pathname: "/admin/roles/new",
+      permissions: ["roles.viewAny"],
+      onToggleGroup,
+    });
+    expect(onToggleGroup).toHaveBeenCalledWith("core/access");
+  });
+
+  it("hides the access group when neither core page is authorized", () => {
+    renderNav({ permissions: [] });
+    expect(
+      screen.queryByRole("button", { name: "Acesso" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("toggles a group without navigation and marks only the active child", async () => {
     const userActions = userEvent.setup();
     const onToggleGroup = vi.fn();
@@ -226,4 +279,20 @@ describe("AdminNav", () => {
     act(() => imperativeRef.current?.expandGroup("customers"));
     expect(screen.getByRole("button", { name: "Clientes" })).toHaveFocus();
   });
+});
+
+it("exibe Configurações e Módulos conforme a permissão do núcleo", () => {
+  renderNav({
+    pathname: "/admin/modules",
+    permissions: ["modules.viewAny"],
+    expanded: new Set(["core/settings"]),
+  });
+  expect(screen.getByRole("button", { name: "Configurações" })).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+  expect(screen.getByRole("link", { name: "Módulos" })).toHaveAttribute(
+    "href",
+    "/admin/modules",
+  );
 });

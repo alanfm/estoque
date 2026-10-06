@@ -201,16 +201,11 @@ export default {
       permission: "customers.viewAny",
       order: 10,
     },
-    {
-      to: "/admin/customers/new",
-      label: "Novo cliente",
-      permission: "customers.create",
-      end: true,
-      order: 20,
-    },
   ],
 } satisfies FrontendModule;
 ```
+
+No módulo de referência, criação e edição abrem em modais na listagem; somente a listagem possui rota e submenu (ADR-025).
 
 Módulos que adotam `navigationGroup` devem declarar no manifesto uma faixa `core` que inclua `^1.1.0` e gerar novo build dos assets no host. Sem o campo, os itens permanecem links planos. `ModuleNavigationItem.permission` filtra cada link; não associe permissão ao grupo. Consulte a [SPEC-001](specs/module-sidebar-navigation.md) para os detalhes de comportamento e acessibilidade.
 

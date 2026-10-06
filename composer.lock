@@ -12,7 +12,7 @@
             "dist": {
                 "type": "path",
                 "url": "modules/acme/inventory",
-                "reference": "3604613c47dbf5ea8190541ae1fbff4b0d01e848"
+                "reference": "67beff627f0dbedfcdcac12782b33c44ab65caed"
             },
             "require": {
                 "laravel/framework": "^13.0",
@@ -29,7 +29,8 @@
             },
             "autoload": {
                 "psr-4": {
-                    "Acme\\Inventory\\": "src/"
+                    "Acme\\Inventory\\": "src/",
+                    "Acme\\Inventory\\Database\\Factories\\": "database/factories/"
                 }
             },
             "autoload-dev": {

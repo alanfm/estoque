@@ -349,3 +349,26 @@ A [SPEC-002](specs/local-ldap-authentication.md) define persistência, contrato 
 O formulário recebe matrícula e senha, com resolução automática da origem. Contas locais existentes usam senha local; contas LDAP usam o diretório. No modo LDAP, uma matrícula ausente na base local pode autenticar no AD e criar sua conta a partir de nome, e-mail e matrícula, após leitura de uma entrada única dentro do base DN configurado. A nova conta é marcada como administrada pelo LDAP, sem senha local, papéis ou permissões. Nenhum vínculo é inferido por e-mail; conflitos de e-mail, matrícula ou identificador estável do diretório impedem provisionamento e exigem revisão administrativa.
 
 Nome, e-mail, matrícula e origens da conta importada ficam protegidos contra alteração manual, inclusive por APIs administrativas; papéis continuam administrados no host. A página de perfil oferece sincronização explícita de nome/e-mail mediante nova confirmação da senha institucional e do mesmo `objectGUID`. A sincronização conserva matrícula, ID local, papéis e permissões. A senha institucional não é armazenada; o AD nunca concede papéis. As contas previamente provisionadas com LDAP e fallback local autorizado conservam seu contrato. A mudança substitui a proibição de provisionamento no login da ADR-023 e está detalhada na SPEC-002.
+
+### ADR-025 — Formulários administrativos em modais
+
+**Status:** aceita e implementada.
+
+Criação e edição de usuários, papéis e clientes abrem em modais nas respectivas listagens. As páginas e rotas dedicadas a esses formulários foram removidas, assim como o submenu de criação de clientes. Salvar atualiza a listagem mantendo filtros e paginação; cancelar fecha o modal. A edição mantém as exigências de visualização e atualização e as restrições das contas LDAP e papéis protegidos. As permissões do formulário de papéis são agrupadas em um accordion por módulo, com seções independentes e controles preservados ao recolher.
+
+### ADR-026 — Cards automáticos dos módulos no painel
+
+O painel inicial deriva seus cards da navegação de cada módulo registrado, preservada junto aos metadados e rotas no registro frontend. A extensão dos metadados é aditiva. Módulos agrupados e legados participam, inclusive links registrados por callback. A exibição usa as permissões efetivas da sessão e as condições da rota de destino; um módulo sem links autorizados não gera card. O papel `super-admin` é a exceção: o bypass centralizado nos helpers de autorização da SPA permite todos os links, mesmo sem permissões explícitas na sessão. O painel conserva os atalhos administrativos do núcleo. Instalação e habilitação continuam seguindo o ciclo de build dos módulos.
+
+### ADR-027 — Gerenciamento administrativo de módulos no core
+
+**Status:** aceita e implementada.
+
+Configurações → Módulos pertence ao core e expõe listar, adicionar por link GitHub, remover, habilitar e desabilitar com permissões próprias. Instalação valida a compatibilidade antes de executar Composer, resolve dependências em dry-run e mantém o pacote inicialmente desabilitado. Habilitação executa migrations e recompila a SPA; desabilitação e remoção preservam dados e vínculos e bloqueiam dependentes ativos. Operações do painel são serializadas e tentam recuperação de arquivos/estado em falha. Providers são validados por `core:modules:validate` sem ativação transitória. O host de desenvolvimento/build precisa ser mutável e ter as ferramentas de instalação; a imagem de produção continua imutável, com alterações distribuídas por nova imagem. Consulte [gerenciamento de módulos](module-management.md) para API, configuração e limites operacionais.
+
+
+## Portabilidade do pacote Inventory — 06/10/2026
+
+O host estoque contém extensões locais de `module-kit` que não pertencem à superfície publicada pelo Starterkit upstream `419ccbf`. Para distribuição independente, Inventory usa do host somente os componentes básicos e `useSession` já exportados. UI adicional, helpers e transporte HTTP restrito ao namespace Inventory são privados do pacote, em `resources/spa/support`; seguem os tokens semânticos, envelopes e autenticação same-origin do core. Não importam implementações internas do host nem exigem alterar os seus exports. O frontend continua compilado com as dependências npm compartilhadas do host.
+
+A distribuição exporta a raiz de `modules/acme/inventory`, com `composer.json` e `module.json` no primeiro nível, para um repositório GitHub próprio. Não inclui o host ou dados operacionais. Composer publica o autoload da factory referenciada pelo modelo, pois `autoload-dev` de dependências não é carregado pelo host. GD e ZIP são requisitos de ambiente de PhpSpreadsheet; devem estar disponíveis nas etapas Composer/runtime da imagem de destino. A instalação mutável e a produção imutável seguem o contrato documentado em `module-management.md`.

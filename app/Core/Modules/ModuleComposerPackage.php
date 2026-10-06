@@ -13,7 +13,7 @@ final class ModuleComposerPackage
     /**
      * @return array{providers: list<class-string>, issues: list<string>}
      */
-    public function inspect(string $modulePath, string $phpVersion, string $laravelVersion): array
+    public function inspect(string $modulePath, string $phpVersion, string $laravelVersion, bool $checkProviders = true): array
     {
         $issues = [];
         $providers = [];
@@ -54,7 +54,7 @@ final class ModuleComposerPackage
             $issues[] = 'composer.json deve declarar extra.laravel.providers.';
         } else {
             foreach ($declared as $provider) {
-                if (! is_string($provider) || ! class_exists($provider)) {
+                if (! is_string($provider) || ! preg_match('/^[A-Za-z_][A-Za-z0-9_]*(?:\\\\[A-Za-z_][A-Za-z0-9_]*)+$/', $provider) || ($checkProviders && ! class_exists($provider))) {
                     $issues[] = sprintf('Service Provider "%s" não pôde ser carregado.', is_string($provider) ? $provider : '(inválido)');
 
                     continue;

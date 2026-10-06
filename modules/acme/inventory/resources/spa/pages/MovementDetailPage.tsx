@@ -4,19 +4,22 @@ import { Link, useParams } from "react-router";
 import {
   Alert,
   Button,
+  EmptyState,
+  ErrorState,
+  Field,
+  Input,
+  PageHeader,
+  Spinner,
+  useSession,
+} from "@starterkit/module-kit";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  EmptyState,
-  ErrorState,
-  Field,
-  Input,
-  PageHeader,
   Select,
-  Spinner,
   Table,
   TableBody,
   TableCell,
@@ -27,8 +30,7 @@ import {
   Textarea,
   can,
   useAsync,
-  useSession,
-} from "@starterkit/module-kit";
+} from "../support";
 import { labeled, unitLabels } from "../labels";
 import { catalogService } from "../services/catalogService";
 import { movementService } from "../services/movementService";

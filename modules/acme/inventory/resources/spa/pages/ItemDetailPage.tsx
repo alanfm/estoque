@@ -3,22 +3,25 @@ import { useCallback, useState } from "react";
 import { useParams } from "react-router";
 import {
   Alert,
-  Badge,
   Button,
+  EmptyState,
+  ErrorState,
+  Field,
+  Input,
+  PageHeader,
+  Spinner,
+  useSession,
+} from "@starterkit/module-kit";
+import {
+  Badge,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  EmptyState,
-  ErrorState,
-  Field,
-  Input,
-  PageHeader,
   Select,
   SimpleTooltip,
-  Spinner,
   Table,
   TableBody,
   TableCell,
@@ -29,8 +32,7 @@ import {
   Textarea,
   can,
   useAsync,
-  useSession,
-} from "@starterkit/module-kit";
+} from "../support";
 import {
   catalogService,
   type Variant,

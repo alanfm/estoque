@@ -1,21 +1,27 @@
-import { FormModal } from "../../components/overlays/FormModal";
-import { UsersListPage } from "./UsersListPage";
 import { useCallback } from "react";
-import { useNavigate, useParams } from "react-router";
 import { ErrorState } from "../../components/feedback/ErrorState";
 import { Spinner } from "../../components/feedback/Spinner";
+import {
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "../../components/overlays/Dialog";
 import { useAsync } from "../../hooks/useAsync";
 import { useRoleOptions } from "../../hooks/useRoleOptions";
 import { can } from "../../lib/permissions";
-import { useDocumentTitle } from "../../router/guards";
 import { usersService } from "../../services/users/usersService";
 import { useSession } from "../../stores/session/SessionContext";
 import { UserForm } from "./UserForm";
 
-export function UserEditPage() {
-  useDocumentTitle("Editar usuário");
-  const { id = "" } = useParams();
-  const navigate = useNavigate();
+export function UserEditForm({
+  id,
+  onCancel,
+  onSaved,
+}: {
+  id: string;
+  onCancel(): void;
+  onSaved(message: string): void;
+}) {
   const { state } = useSession();
   const rolesAvailable = can(state.user, "roles.viewAny");
   const { roles, loading: rolesLoading } = useRoleOptions(rolesAvailable);
@@ -27,13 +33,14 @@ export function UserEditPage() {
   const { data, loading, error, reload } = useAsync(loader);
 
   return (
-    <FormModal
-      title="Editar usuário"
-      returnTo="/admin/users"
-      background={<UsersListPage />}
-      backgroundPermission="users.viewAny"
-      description="Atualize os dados e os papéis da conta."
-    >
+    <div className="space-y-6">
+      <DialogHeader>
+        <DialogTitle>Editar usuário</DialogTitle>
+        <DialogDescription>
+          Atualize os dados e os papéis da conta.
+        </DialogDescription>
+      </DialogHeader>
+
       {loading && !data ? (
         <div className="flex justify-center p-10">
           <Spinner label="Carregando usuário" />
@@ -52,7 +59,7 @@ export function UserEditPage() {
           }}
           submitLabel="Salvar alterações"
           dataLocked={data.accountSource === "ldap"}
-          cancelTo="/admin/users"
+          onCancel={onCancel}
           roles={roles}
           rolesAvailable={rolesAvailable}
           rolesLoading={rolesLoading}
@@ -61,13 +68,10 @@ export function UserEditPage() {
               id,
               data.accountSource === "ldap" ? { roles: values.roles } : values,
             );
-            navigate("/admin/users", {
-              replace: true,
-              state: { flash: "Usuário atualizado." },
-            });
+            onSaved("Usuário atualizado.");
           }}
         />
       ) : null}
-    </FormModal>
+    </div>
   );
 }

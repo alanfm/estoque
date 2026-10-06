@@ -7,11 +7,11 @@ import {
   useAsync,
   type ApiRequestOptions,
   type ApiResource,
-} from "@starterkit/module-kit";
+} from "./support";
 import { describe, expect, test } from "vitest";
 
-describe("public module HTTP contract", () => {
-  test("exports the shared API client and response contracts", () => {
+describe("recursos privados do inventário", () => {
+  test("fornece HTTP e UI sem extensões do module-kit", () => {
     const options: ApiRequestOptions = {
       headers: { "Idempotency-Key": "op-1" },
     };

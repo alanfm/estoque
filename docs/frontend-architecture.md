@@ -204,3 +204,7 @@ Um módulo frontend NÃO DEVE:
 - Criar tokens visuais próprios sem aprovação do design system.
 - Registrar listeners globais sem removê-los.
 - Presumir que um papel equivale a uma permissão.
+
+## Formulários administrativos
+
+Os formulários de criação e edição de usuários, papéis e clientes são apresentados em modais sobre suas listagens, sem rotas próprias. Os modais usam o Dialog do núcleo, com título, descrição, foco restrito, fechamento por Escape e rolagem em telas pequenas. As permissões dos papéis usam seções expansíveis por módulo (`details`/`summary`), mantendo as seleções ao recolher. Ver ADR-025.

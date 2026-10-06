@@ -3,6 +3,7 @@
 $paths = (string) env('STARTERKIT_MODULE_PATHS', base_path('modules'));
 
 return [
+    'management_enabled' => (bool) env('STARTERKIT_MODULE_MANAGEMENT', env('APP_ENV', 'production') === 'local'),
     /*
     |--------------------------------------------------------------------------
     | Versão do núcleo

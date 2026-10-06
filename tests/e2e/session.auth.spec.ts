@@ -28,7 +28,7 @@ test.describe("Sessão autenticada", () => {
 
     await expect(page.getByRole("heading", { name: "Usuários" })).toBeVisible();
     await expect(
-      page.getByRole("link", { name: /Criar usuário/ }),
+      page.getByRole("button", { name: /Criar usuário/ }),
     ).toBeVisible();
   });
 });

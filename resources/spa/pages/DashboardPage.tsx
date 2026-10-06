@@ -9,6 +9,9 @@ import {
   CardTitle,
 } from "../components/data-display/Card";
 import { can } from "../lib/permissions";
+import { resolveModuleGroupIcon } from "../lib/icons";
+import { useModules } from "../modules/ModulesContext";
+import { visibleDashboardModules } from "../modules/dashboard";
 import { useDocumentTitle } from "../router/guards";
 import { useSession } from "../stores/session/SessionContext";
 
@@ -16,13 +19,16 @@ export function DashboardPage() {
   useDocumentTitle("Painel");
   const { state } = useSession();
   const user = state.user;
+  const { modules } = useModules();
+  const visibleModules = visibleDashboardModules(modules, user);
 
   return (
     <div className="space-y-8">
       <header className="space-y-1">
         <h1 className="text-h1">Olá, {user?.name}</h1>
         <p className="text-body text-ink-secondary">
-          Este é o painel do starter kit. Use o menu para administrar o acesso.
+          Este é o painel do starter kit. Acesse os módulos e administre o
+          acesso.
         </p>
       </header>
 
@@ -64,6 +70,29 @@ export function DashboardPage() {
             </CardContent>
           </Card>
         ) : null}
+        {visibleModules.map((module) => {
+          const Icon = resolveModuleGroupIcon(module.icon);
+          return (
+            <Card key={module.name}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Icon className="size-5 text-brand" aria-hidden="true" />
+                  {module.displayName}
+                </CardTitle>
+                <CardDescription>
+                  Acesse as funcionalidades de {module.displayName}.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-3">
+                {module.navigation.map((item) => (
+                  <Button asChild variant="secondary" key={item.to}>
+                    <Link to={item.to}>{item.label}</Link>
+                  </Button>
+                ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

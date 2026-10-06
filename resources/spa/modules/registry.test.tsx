@@ -14,7 +14,11 @@ describe("createModuleRegistry", () => {
 
     expect(registry.issues).toEqual([]);
     expect(registry.modules).toEqual([
-      { name: "contract-sample", displayName: "Amostra de Contrato" },
+      expect.objectContaining({
+        name: "contract-sample",
+        displayName: "Amostra de Contrato",
+        navigation: registry.navigation,
+      }),
     ]);
     expect(registry.routes.map((route) => route.path)).toEqual([
       "admin/contract-sample",
